@@ -1,0 +1,14 @@
+{
+    "name": "GetNearRankExtension",
+    "version": "1.0.0",
+    "manifest_version": 2,
+    "description": "Google Chrome Extension version of GetNearRankMod",
+    "content_scripts": [{
+        "matches": ["https://beatsaver.com/maps/*"],
+        "js": [
+        "BeatSaver.js"
+        ],
+        "run_at": "document_end",
+        "all_frames": true
+    }]
+}
