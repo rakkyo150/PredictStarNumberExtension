@@ -4,7 +4,7 @@
     "manifest_version": 2,
     "description": "Google Chrome Extension version of GetNearRankMod",
     "content_scripts": [{
-        "matches": ["https://beatsaver.com/maps/*"],
+        "matches": ["https://beatsaver.com/*"],
         "js": [
         "BeatSaver.js"
         ],
