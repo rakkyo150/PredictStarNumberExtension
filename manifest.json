@@ -1,8 +1,8 @@
 {
-    "name": "GetNearRankExtension",
+    "name": "PredictStarNumberExtension",
     "version": "1.0.0",
     "manifest_version": 2,
-    "description": "Google Chrome Extension version of GetNearRankMod",
+    "description": "Google Chrome Extension version of PredictStarNumber",
     "content_scripts": [{
         "matches": ["https://beatsaver.com/*"],
         "js": [
