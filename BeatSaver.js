@@ -5,7 +5,7 @@ function start(){
     var main=document.querySelector('main');
 
     var mo = new MutationObserver(function() {
-    mainmain();
+    core();
     });
     var config = {
     childList: true
@@ -13,7 +13,7 @@ function start(){
     mo.observe(main, config);
 }
 
-function mainmain(){
+function core(){
     let retryCount=0;
     const maxRetry=5;
     const jsInitCheckTimer = setInterval(jsLoaded, 1000);
@@ -39,7 +39,6 @@ function mainmain(){
                     method: 'GET'
                 }).then((response)=>{
                     if(response.ok){
-                        console.log(response.text);
                         return response.json();
                     }
                     throw new Error();
