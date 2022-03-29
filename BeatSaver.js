@@ -62,24 +62,25 @@ function core(){
                         difficultyList.forEach(function (difficultyItem){
                             let starNumber;
                             if(difficultyItem.querySelector('.diff-stars')==null){
-                                if(difficultyItem.querySelector('img[title="Expert+ Standard"]')!=null){
+                                if(difficultyItem.querySelector('img[title~="Expert+"]')!=null){
                                     starNumber=json.ExpertPlus;
                                     console.log(starNumber);
                                 }
-                                else if(difficultyItem.querySelector('img[title="Expert Standard"]')!=null){
+                                else if(difficultyItem.querySelector('img[title~="Expert"]')!=null){
                                     starNumber=json.Expert;
                                     console.log(starNumber);
                                 }
-                                else if(difficultyItem.querySelector('img[title="Hard Standard"]')!=null){
+                                else if(difficultyItem.querySelector('img[title~="Hard"]')!=null){
                                     starNumber=json.Hard;
                                     console.log(starNumber);
-                                }else if(difficultyItem.querySelector('img[title="Normal Standard"]')!=null){
+                                }else if(difficultyItem.querySelector('img[title~="Normal"]')!=null){
                                     starNumber=json.Normal;
                                     console.log(starNumber);
                                 }
-                                else if(difficultyItem.querySelector('img[title="Easy Standard"]')!=null){
+                                else if(difficultyItem.querySelector('img[title~="Easy"]')!=null){
                                     starNumber=json.Easy;
                                     console.log(starNumber);
+                                // 念のため
                                 }else{
                                     starNumber="?";
                                     console.log(starNumber);

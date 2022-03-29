@@ -124,6 +124,7 @@ function main(){
                         else if(difficulty="Expert+"){
                             predictStar='('+json.ExpertPlus+')★';
                         }
+                        // 念のため
                         else{
                             predictStar="?";
                         }
@@ -135,6 +136,10 @@ function main(){
                 }
             });
             clearInterval(jsInitCheckTimer);
+        }
+        // プレイヤーページのマップ一覧ページ
+        else if(document.querySelector('.svelte-1s2wgqz')!=null){
+            
         }
     }
 }
