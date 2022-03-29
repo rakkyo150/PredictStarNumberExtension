@@ -1,10 +1,19 @@
 window.onload=start;
 
 function start(){
+
+    let lastUrl = ""; 
+    console.log(lastUrl)
+
     var head=document.querySelector('head');
 
     var mo = new MutationObserver(function() {
-    main();
+        let url=location.href;
+        console.log(url);
+        if (url !== lastUrl) {
+            lastUrl = url;
+            main();
+        }
     });
     var config = {
     childList: true
@@ -26,6 +35,7 @@ function main(){
                 clearInterval(jsInitCheckTimer);
             }
         }
+        // マップの個別ページ
         else if(document.querySelector('.svelte-n29l0e')!=null){
             var mapCard=document.querySelector('.svelte-n29l0e');
             var beforeTag=mapCard.querySelector('.tag');
@@ -42,7 +52,9 @@ function main(){
                     if(response.ok){
                         return response.json();
                     }
-                    throw new Error();
+                    else{
+                        throw new Error(response.statusText);
+                    }
                 }).then((json)=>{
                     let predictStar;
                     if(difficulty=="Easy"){
@@ -64,8 +76,64 @@ function main(){
                         predictStar="?";
                     }
                     beforeTag.textContent=predictStar;
+                }).catch((err)=>{
+                    console.log(err);
+                    beforeTag.textContent="?";
                 })
             }
+            clearInterval(jsInitCheckTimer);
+        }
+        // マップ一覧ページ
+        else if(document.querySelector('.svelte-18crtdx')!=null){
+            var mapCards=document.querySelectorAll('.song-container');
+            mapCards.forEach(mapCard => {
+                console.log('pass');
+                console.log(mapCard);
+                var beforeTag=mapCard.querySelector('.tag');
+                var difficulty=beforeTag.getAttribute("title");
+                var rank=beforeTag.textContent;
+                if(!rank.match(/★/)){
+                    var songInfo=mapCard.querySelector('.song-info');
+                    var leaderboardIdElement=songInfo.querySelector('a');
+                    var leaderboardId=leaderboardIdElement.getAttribute("href").replace('/leaderboard/','');
+                    let endpoint=`https://predictstarnumber.herokuapp.com/api/leaderboardId/${leaderboardId}`;
+                    fetch(endpoint,{
+                        mode: 'cors',
+                        method: 'GET'
+                    }).then((response)=>{
+                        if(response.ok){
+                            return response.json();
+                        }
+                        else{
+                            throw new Error(response.statusText);
+                        }
+                    }).then((json)=>{
+                        let predictStar;
+                        if(difficulty=="Easy"){
+                            predictStar='('+json.Easy+')★';
+                        }
+                        else if(difficulty=="Normal"){
+                            predictStar='('+json.Normal+')★';
+                        }
+                        else if(difficulty=="Hard"){
+                            predictStar='('+json.Hard+')★';
+                        }
+                        else if(difficulty=="Expert"){
+                            predictStar='('+json.Expert+')★';
+                        }
+                        else if(difficulty="Expert+"){
+                            predictStar='('+json.ExpertPlus+')★';
+                        }
+                        else{
+                            predictStar="?";
+                        }
+                        beforeTag.textContent=predictStar;
+                    }).catch((err)=>{
+                        console.log(err.message);
+                        beforeTag.textContent="?";
+                    })
+                }
+            });
             clearInterval(jsInitCheckTimer);
         }
     }

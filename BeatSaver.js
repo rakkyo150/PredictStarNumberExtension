@@ -2,10 +2,16 @@ window.onload=start;
 
 function start(){
     console.log("start");
+    let lastUrl = ""
     var main=document.querySelector('main');
 
     var mo = new MutationObserver(function() {
-    core();
+        let url=location.href;
+        console.log(url);
+        if (url !== lastUrl) {
+            lastUrl = url;
+            core();
+        }
     });
     var config = {
     childList: true
@@ -41,8 +47,9 @@ function core(){
                     if(response.ok){
                         return response.json();
                     }
-                    throw new Error();
-                    console.log(response);
+                    else{
+                        throw new Error();
+                    }
                 }).then((json)=>{
                     var mapStats=document.querySelector('.mapstats');
                     var difficultyList =mapStats.querySelectorAll('.list-group-item');
@@ -90,6 +97,8 @@ function core(){
                             }
                         })
                     }
+                }).catch((err)=>{
+                    console.log(err);
                 })
             }
             clearInterval(jsInitCheckTimer);
