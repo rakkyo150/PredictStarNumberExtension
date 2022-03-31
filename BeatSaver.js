@@ -87,14 +87,23 @@ function core(){
                                 }
                                 var stats=difficultyItem.querySelector('.stats');
                                 console.log(stats);
+                                
                                 var starSpan=document.createElement('span');
                                 starSpan.classList.add('diff-stars');
                                 starSpan.textContent='('+starNumber+')';
+                                starSpan.style.margin = '0px auto';
+                                starSpan.style.paddingLeft = '5px';
+                                starSpan.style.paddingRight = '5px';
+                                starSpan.style.paddingTop = '0px';
+                                starSpan.style.paddingBottom = '0px';
+                                starSpan.style.textAlign = 'center';
+                                
                                 var starI=document.createElement('i');
                                 starI.classList.add('fas');
                                 starI.classList.add('fa-star')
                                 starSpan.prepend(starI);
-                                stats.prepend(starSpan);
+
+                                difficultyItem.insertBefore(starSpan, stats);
                             }
                         })
                     }
