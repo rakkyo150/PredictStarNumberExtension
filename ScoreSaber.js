@@ -16,13 +16,14 @@ function start(){
         }
     });
     var config = {
-    childList: true,
-    subtree:true
+    subtree:true,
+    attributes:true,
     };
     mo.observe(body, config);
 }
 
 function main(){
+    console.log("main fired");
     let retryCount=0;
     const maxRetry=5;
     const jsInitCheckTimer = setInterval(jsLoaded, 1000);
