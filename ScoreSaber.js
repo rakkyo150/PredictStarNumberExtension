@@ -5,7 +5,7 @@ function start(){
     let lastUrl = ""; 
     console.log(lastUrl)
 
-    var head=document.querySelector('head');
+    var body=document.querySelector('body');
 
     var mo = new MutationObserver(function() {
         let url=location.href;
@@ -16,9 +16,10 @@ function start(){
         }
     });
     var config = {
-    childList: true
+    childList: true,
+    subtree:true
     };
-    mo.observe(head, config);
+    mo.observe(body, config);
 }
 
 function main(){
@@ -26,66 +27,67 @@ function main(){
     const maxRetry=5;
     const jsInitCheckTimer = setInterval(jsLoaded, 1000);
     function jsLoaded() {
-        if(document.querySelector('.svelte-n29l0e')==null &&
-        document.querySelector('.svelte-18crtdx')==null &&
-        document.querySelector('.svelte-1s2wgqz')==null){
+        if(document.querySelector('.media-content.is-clipped')==null &&
+        document.querySelector('.song-container')==null){
             retryCount++;
             if(retryCount ==maxRetry){
                 console.log("５秒間必要な要素が見つからなかったので終了");
                 clearInterval(jsInitCheckTimer);
             }
         }
-        // マップの個別ページ
-        else if(document.querySelector('.svelte-n29l0e')!=null){
-            var mapCard=document.querySelector('.svelte-n29l0e');
-            var beforeTag=mapCard.querySelector('.tag');
-            var rank=beforeTag.textContent;
-            console.log("pass?");
-            if(!rank.match(/★/)){
-                var hashElement=mapCard.querySelector('.text-muted');
-                let endpoint=`https://predictstarnumber.herokuapp.com/api/hash/${hashElement.textContent}`
-                SwapStar(endpoint,beforeTag)
-            }
-            clearInterval(jsInitCheckTimer);
+        // マップのリーダーボードorランクリクエストの譜面の固有のページ
+        else if(document.querySelector('.media-content.is-clipped')!=null){
+            PredictStarNumberForLeaderboard(jsInitCheckTimer);
         }
-        // マップ一覧ページ
-        else if(document.querySelector('.svelte-18crtdx')!=null){
-            var mapCards=document.querySelectorAll('.song-container');
-            mapCards.forEach((mapCard) => {
-                console.log('pass');
-                console.log(mapCard);
-                var beforeTag=mapCard.querySelector('.tag');
-                var rank=beforeTag.textContent;
-                if(!rank.match(/★/)){
-                    var songInfo=mapCard.querySelector('.song-info');
-                    var leaderboardIdElement=songInfo.querySelector('a');
-                    var leaderboardId=leaderboardIdElement.getAttribute("href").replace('/leaderboard/','');
-                    let endpoint=`https://predictstarnumber.herokuapp.com/api/leaderboardId/${leaderboardId}`;
-                    SwapStar(endpoint,beforeTag)
-                }
-            });
-            clearInterval(jsInitCheckTimer);
-        }
-        // プレイヤーページのマップ一覧ページ
-        else if(document.querySelector('.svelte-1s2wgqz')!=null){
-            var mapCards=document.querySelectorAll(".song-container");
-            console.log(mapCards[0]);
-            // mapCardが配列と似て非なるオブジェクトらしいので
-            mapCards.forEach((mapCard) => {
-                console.log('pass');
-                var beforeTag=mapCard.querySelector('.tag');
-                var rank=beforeTag.textContent;
-                if(!rank.match(/★/)){
-                    var songInfo=mapCard.querySelector('.song-info');
-                    var leaderboardIdElement=songInfo.querySelector('a');
-                    var leaderboardId=leaderboardIdElement.getAttribute("href").replace('/leaderboard/','');
-                    let endpoint=`https://predictstarnumber.herokuapp.com/api/leaderboardId/${leaderboardId}`;
-                    SwapStar(endpoint,beforeTag)
-                }
-            });
-            clearInterval(jsInitCheckTimer);
+        // プレイヤーページのマップ一覧ページorマップ一覧ページ
+        else if(document.querySelector('.song-container')!=null){
+            PredictStarNumberForMapList(jsInitCheckTimer);
         }
     }
+}
+
+function PredictStarNumberForMapList(jsInitCheckTimer) {
+    const mapListUrl='https://scoresaber.com/leaderboards';
+    const usersMapListUrl='https://scoresaber.com/u';
+    if(!location.href.includes(mapListUrl) && !location.href.includes(usersMapListUrl)) return;
+    
+    var mapCards = document.querySelectorAll('.song-container');
+    mapCards.forEach((mapCard) => {
+        console.log('pass');
+        console.log(mapCard);
+        var beforeTag = mapCard.querySelector('.tag');
+        var rank = beforeTag.textContent;
+        
+        if (!rank.includes('★') || rank.includes(')★')) {
+            var songInfo = mapCard.querySelector('.song-info');
+            var leaderboardIdElement = songInfo.querySelector('a');
+            var leaderboardId = leaderboardIdElement.getAttribute("href").replace('/leaderboard/', '');
+            const endpoint = `https://predictstarnumber.herokuapp.com/api/leaderboardId/${leaderboardId}`;
+            SwapStar(endpoint, beforeTag);
+        }
+    });
+    clearInterval(jsInitCheckTimer);
+}
+
+function PredictStarNumberForLeaderboard(jsInitCheckTimer) {
+    const leaderboardUrl='https://scoresaber.com/leaderboard';
+    const requestUrl='https://scoresaber.com/ranking/request';
+    if(!location.href.includes(leaderboardUrl) && !location.href.includes(requestUrl)) return;
+
+    var mapCard = document.querySelector('.media-content.is-clipped');
+    var beforeTag = mapCard.querySelector('.tag');
+    var rank = beforeTag.textContent;
+    console.log("pass?");
+    
+
+    if (!rank.includes('★') || rank.includes(')★')) {
+        var titleElement = mapCard.querySelector('.title');
+        var leaderboardIdElement = titleElement.querySelector('a');
+        var leaderboardId = leaderboardIdElement.getAttribute('href').replace('/leaderboard/', '');
+        const endpoint = `https://predictstarnumber.herokuapp.com/api/leaderboardId/${leaderboardId}`;
+        SwapStar(endpoint, beforeTag);
+    }
+    clearInterval(jsInitCheckTimer);
 }
 
 function SwapStar(endpoint,beforeTag){
