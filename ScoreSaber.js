@@ -38,16 +38,16 @@ function main() {
         }
         // マップのリーダーボードorランクリクエストの譜面の固有のページ
         else if (document.querySelector('.media-content.is-clipped') != null) {
-            PredictStarNumberForLeaderboard(jsInitCheckTimer);
+            SwapForLeaderboard(jsInitCheckTimer);
         }
         // プレイヤーページのマップ一覧ページorマップ一覧ページ
         else if (document.querySelector('.song-container') != null) {
-            PredictStarNumberForMapList(jsInitCheckTimer);
+            SwapForMapList(jsInitCheckTimer);
         }
     }
 }
 
-function PredictStarNumberForMapList(jsInitCheckTimer) {
+function SwapForMapList(jsInitCheckTimer) {
     const mapListUrl = 'https://scoresaber.com/leaderboards';
     const usersMapListUrl = 'https://scoresaber.com/u';
     if (!location.href.includes(mapListUrl) && !location.href.includes(usersMapListUrl)) return;
@@ -64,13 +64,13 @@ function PredictStarNumberForMapList(jsInitCheckTimer) {
             var leaderboardIdElement = songInfo.querySelector('a');
             var leaderboardId = leaderboardIdElement.getAttribute("href").replace('/leaderboard/', '');
             const endpoint = `https://predictstarnumber.herokuapp.com/api/leaderboardId/${leaderboardId}`;
-            SwapStar(endpoint, beforeTag);
+            SwapTagName(endpoint, beforeTag);
         }
     });
     clearInterval(jsInitCheckTimer);
 }
 
-function PredictStarNumberForLeaderboard(jsInitCheckTimer) {
+function SwapForLeaderboard(jsInitCheckTimer) {
     const leaderboardUrl = 'https://scoresaber.com/leaderboard';
     const requestUrl = 'https://scoresaber.com/ranking/request';
     if (!location.href.includes(leaderboardUrl) && !location.href.includes(requestUrl)) return;
@@ -86,12 +86,12 @@ function PredictStarNumberForLeaderboard(jsInitCheckTimer) {
         var leaderboardIdElement = titleElement.querySelector('a');
         var leaderboardId = leaderboardIdElement.getAttribute('href').replace('/leaderboard/', '');
         const endpoint = `https://predictstarnumber.herokuapp.com/api/leaderboardId/${leaderboardId}`;
-        SwapStar(endpoint, beforeTag);
+        SwapTagName(endpoint, beforeTag);
     }
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapStar(endpoint, beforeTag) {
+function SwapTagName(endpoint, beforeTag) {
     var difficulty = beforeTag.getAttribute("title");
 
     fetch(endpoint, {
