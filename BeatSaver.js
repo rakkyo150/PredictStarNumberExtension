@@ -3,17 +3,17 @@ window.onload = start;
 function start() {
     console.log("start");
     let lastUrl = "";
-    var main = document.querySelector("main");
+    const main = document.querySelector("main");
 
-    var mo = new MutationObserver(function () {
-        let url = location.href;
+    const mo = new MutationObserver(function () {
+        const url = location.href;
         console.log(url);
-        if (url !== lastUrl) {
-            lastUrl = url;
-            core();
-        }
+        if (url == lastUrl) return;
+
+        lastUrl = url;
+        core();
     });
-    var config = {
+    const config = {
         childList: true,
     };
     mo.observe(main, config);
@@ -26,84 +26,84 @@ function core() {
     function jsLoaded() {
         if (document.querySelector(".stats") == null) {
             retryCount++;
-            if (retryCount == maxRetry) {
-                console.log("５秒間必要な要素が見つからなかったので終了");
-                clearInterval(jsInitCheckTimer);
-            }
-        } else if (document.querySelector(".stats") != null) {
-            let oneClickUrl = document
-                .querySelector('a[title="One-Click"]')
-                .getAttribute("href");
-            let id = oneClickUrl.replace("beatsaver://", "");
-            if (id == null) {
-                console.log("idを取得できませんでした");
-            } else {
-                let endpoint = `https://predictstarnumber.herokuapp.com/api2/id/${id}`;
-                fetch(endpoint, {
-                    mode: "cors",
-                    method: "GET",
-                })
-                    .then((response) => {
-                        if (response.ok) {
-                            return response.json();
-                        } else {
-                            throw new Error();
-                        }
-                    })
-                    .then((json) => {
-                        var mapStats = document.querySelector(".mapstats");
-                        var difficultyList =
-                            mapStats.querySelectorAll(".list-group-item");
+            if (retryCount != maxRetry) return;
 
-                        if (difficultyList == null) {
-                            console.log("マップの種類を取得できませんでした");
-                        } else {
-                            difficultyList.forEach(function (difficultyItem) {
-                                if (
-                                    difficultyItem.querySelector(
-                                        ".diff-stars",
-                                    ) == null
-                                ) {
-                                    let starNumber = "";
-
-                                    starNumber = GetStarNumber(
-                                        difficultyItem,
-                                        json,
-                                    );
-
-                                    var stats =
-                                        difficultyItem.querySelector(".stats");
-                                    console.log(stats);
-
-                                    var starSpan =
-                                        document.createElement("span");
-                                    starSpan.classList.add("diff-stars");
-                                    starSpan.textContent =
-                                        "(" + starNumber + ")";
-                                    starSpan.style.margin = "0px auto";
-                                    starSpan.style.paddingLeft = "5px";
-                                    starSpan.style.paddingRight = "5px";
-                                    starSpan.style.paddingTop = "0px";
-                                    starSpan.style.paddingBottom = "0px";
-                                    starSpan.style.textAlign = "center";
-
-                                    var starI = document.createElement("i");
-                                    starI.classList.add("fas");
-                                    starI.classList.add("fa-star");
-                                    starSpan.prepend(starI);
-
-                                    difficultyItem.insertBefore(
-                                        starSpan,
-                                        stats,
-                                    );
-                                }
-                            });
-                        }
-                    });
-            }
+            console.log("５秒間必要な要素が見つからなかったので終了");
             clearInterval(jsInitCheckTimer);
+            return;
         }
+
+        const oneClickUrl = document
+            .querySelector('a[title="One-Click"]')
+            .getAttribute("href");
+        const id = oneClickUrl.replace("beatsaver://", "");
+        if (id == null) {
+            console.log("idを取得できませんでした");
+            clearInterval(jsInitCheckTimer);
+            return;
+        }
+
+        const endpoint = `https://predictstarnumber.herokuapp.com/api2/id/${id}`;
+        fetch(endpoint, {
+            mode: "cors",
+            method: "GET",
+        })
+            .then((response) => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error();
+                }
+            })
+            .then((json) => {
+                const mapStats = document.querySelector(".mapstats");
+                const difficultyList =
+                    mapStats.querySelectorAll(".list-group-item");
+
+                if (difficultyList == null) {
+                    console.log("マップの種類を取得できませんでした");
+                    clearInterval(jsInitCheckTimer);
+                    return;
+                }
+
+                difficultyList.forEach(function (difficultyItem) {
+                    if (difficultyItem.querySelector(".diff-stars") != null) {
+                        clearInterval(jsInitCheckTimer);
+                        return;
+                    }
+
+                    let starNumber = "";
+
+                    starNumber = GetStarNumber(difficultyItem, json);
+
+                    const stats = difficultyItem.querySelector(".stats");
+                    console.log(stats);
+
+                    const starSpan = document.createElement("span");
+                    starSpan.classList.add("diff-stars");
+                    starSpan.textContent = "(" + starNumber + ")";
+
+                    SetStyle(starSpan);
+
+                    const starI = document.createElement("i");
+                    starI.classList.add("fas");
+                    starI.classList.add("fa-star");
+                    starSpan.prepend(starI);
+
+                    difficultyItem.insertBefore(starSpan, stats);
+                });
+            });
+        clearInterval(jsInitCheckTimer);
     }
+}
+
+function SetStyle(starSpan) {
+    starSpan.style.margin = "0px auto";
+    starSpan.style.paddingLeft = "5px";
+    starSpan.style.paddingRight = "5px";
+    starSpan.style.paddingTop = "0px";
+    starSpan.style.paddingBottom = "0px";
+    starSpan.style.textAlign = "center";
 }
 
 function GetStarNumber(difficultyItem, json) {
