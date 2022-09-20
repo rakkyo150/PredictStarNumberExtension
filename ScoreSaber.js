@@ -4,17 +4,17 @@ function start() {
     let lastUrl = "";
     console.log(lastUrl);
 
-    var body = document.querySelector("body");
+    let body = document.querySelector("body");
 
-    var mo = new MutationObserver(function () {
+    const mo = new MutationObserver(function () {
         let url = location.href;
         console.log(url);
-        if (url !== lastUrl) {
-            lastUrl = url;
-            main();
-        }
+        if (url == lastUrl) return;
+
+        lastUrl = url;
+        main();
     });
-    var config = {
+    const config = {
         subtree: true,
         attributes: true,
     };
@@ -32,10 +32,10 @@ function main() {
             document.querySelector(".song-container") == null
         ) {
             retryCount++;
-            if (retryCount == maxRetry) {
-                console.log("５秒間必要な要素が見つからなかったので終了");
-                clearInterval(jsInitCheckTimer);
-            }
+            if (retryCount != maxRetry) return;
+
+            console.log("５秒間必要な要素が見つからなかったので終了");
+            clearInterval(jsInitCheckTimer);
         }
         // マップのリーダーボードorランクリクエストの譜面の固有のページ
         else if (document.querySelector(".media-content.is-clipped") != null) {
@@ -57,24 +57,24 @@ function SwapForMapList(jsInitCheckTimer) {
     )
         return;
 
-    var mapCards = document.querySelectorAll(".song-container");
+    const mapCards = document.querySelectorAll(".song-container");
     mapCards.forEach((mapCard) => {
         console.log("pass");
         console.log(mapCard);
-        var beforeTag = mapCard.querySelector(".tag");
-        var rank = beforeTag.textContent;
+        const beforeTag = mapCard.querySelector(".tag");
+        const rank = beforeTag.textContent;
 
-        if (!rank.includes("★") || rank.includes(")★")) {
-            var songInfo = mapCard.querySelector(".song-info");
-            var leaderboardIdElement = songInfo.querySelector("a");
-            var leaderboardId = leaderboardIdElement
-                .getAttribute("href")
-                .replace("/leaderboard/", "");
-            const endpoint = `https://predictstarnumber.herokuapp.com/api2/leaderboardId/${leaderboardId}`;
+        if (rank.includes("★") && !rank.includes(")★")) return;
 
-            // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
-            SwapTagName(endpoint, "Standard", beforeTag);
-        }
+        const songInfo = mapCard.querySelector(".song-info");
+        const leaderboardIdElement = songInfo.querySelector("a");
+        const leaderboardId = leaderboardIdElement
+            .getAttribute("href")
+            .replace("/leaderboard/", "");
+        const endpoint = `https://predictstarnumber.herokuapp.com/api2/leaderboardId/${leaderboardId}`;
+
+        // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
+        SwapTagName(endpoint, "Standard", beforeTag);
     });
     clearInterval(jsInitCheckTimer);
 }
@@ -115,25 +115,29 @@ function SwapForLeaderboard(jsInitCheckTimer) {
         });
     }
 
-    var mapCard = document.querySelector(".media-content.is-clipped");
-    var beforeTag = mapCard.querySelector("div.tag");
-    var rank = beforeTag.textContent;
+    const mapCard = document.querySelector(".media-content.is-clipped");
+    const beforeTag = mapCard.querySelector("div.tag");
+    const rank = beforeTag.textContent;
     console.log("pass?");
 
-    if (!rank.includes("★") || rank.includes(")★")) {
-        var titleElement = mapCard.querySelector(".title");
-        var leaderboardIdElement = titleElement.querySelector("a");
-        var leaderboardId = leaderboardIdElement
-            .getAttribute("href")
-            .replace("/leaderboard/", "");
-        const endpoint = `https://predictstarnumber.herokuapp.com/api2/leaderboardId/${leaderboardId}`;
-        SwapTagName(endpoint, characteristic, beforeTag);
+    if (rank.includes("★") && !rank.includes(")★")) {
+        clearInterval(jsInitCheckTimer);
+        return;
     }
+
+    const titleElement = mapCard.querySelector(".title");
+    const leaderboardIdElement = titleElement.querySelector("a");
+    const leaderboardId = leaderboardIdElement
+        .getAttribute("href")
+        .replace("/leaderboard/", "");
+    const endpoint = `https://predictstarnumber.herokuapp.com/api2/leaderboardId/${leaderboardId}`;
+    SwapTagName(endpoint, characteristic, beforeTag);
+
     clearInterval(jsInitCheckTimer);
 }
 
 function SwapTagName(endpoint, characteristic, beforeTag) {
-    var difficulty = beforeTag.getAttribute("title");
+    const difficulty = beforeTag.getAttribute("title");
 
     fetch(endpoint, {
         mode: "cors",
