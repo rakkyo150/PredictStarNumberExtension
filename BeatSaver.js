@@ -66,88 +66,11 @@ function core() {
                                 ) {
                                     let starNumber = "";
 
-                                    if (
-                                        difficultyItem.querySelector(
-                                            'img[title~="Expert+"]',
-                                        ) != null
-                                    ) {
-                                        const characteristicImg =
-                                            difficultyItem.querySelector(
-                                                `img[title~="Expert+"]`,
-                                            );
-                                        const characteristic = characteristicImg
-                                            .getAttribute("title")
-                                            .replace(`Expert+ `, "");
-                                        starNumber =
-                                            json[
-                                                `${characteristic}-ExpertPlus`
-                                            ];
-                                        console.log(starNumber);
-                                    } else if (
-                                        difficultyItem.querySelector(
-                                            'img[title~="Expert"]',
-                                        ) != null
-                                    ) {
-                                        const characteristicImg =
-                                            difficultyItem.querySelector(
-                                                `img[title~="Expert"]`,
-                                            );
-                                        const characteristic = characteristicImg
-                                            .getAttribute("title")
-                                            .replace(`Expert `, "");
-                                        starNumber =
-                                            json[`${characteristic}-Expert`];
-                                        console.log(starNumber);
-                                    } else if (
-                                        difficultyItem.querySelector(
-                                            'img[title~="Hard"]',
-                                        ) != null
-                                    ) {
-                                        const characteristicImg =
-                                            difficultyItem.querySelector(
-                                                `img[title~="Hard"]`,
-                                            );
-                                        const characteristic = characteristicImg
-                                            .getAttribute("title")
-                                            .replace(`Hard `, "");
-                                        starNumber =
-                                            json[`${characteristic}-Hard`];
-                                        console.log(starNumber);
-                                    } else if (
-                                        difficultyItem.querySelector(
-                                            'img[title~="Normal"]',
-                                        ) != null
-                                    ) {
-                                        const characteristicImg =
-                                            difficultyItem.querySelector(
-                                                `img[title~="Normal"]`,
-                                            );
-                                        const characteristic = characteristicImg
-                                            .getAttribute("title")
-                                            .replace(`Normal `, "");
-                                        starNumber =
-                                            json[`${characteristic}-Normal`];
-                                        console.log(starNumber);
-                                    } else if (
-                                        difficultyItem.querySelector(
-                                            'img[title~="Easy"]',
-                                        ) != null
-                                    ) {
-                                        const characteristicImg =
-                                            difficultyItem.querySelector(
-                                                `img[title~="Easy"]`,
-                                            );
-                                        const characteristic = characteristicImg
-                                            .getAttribute("title")
-                                            .replace(`Easy `, "");
-                                        starNumber =
-                                            json[`${characteristic}-Easy`];
-                                        console.log(starNumber);
-                                        // 念のため
-                                    } else {
-                                        starNumber = "?";
-                                        console.log(starNumber);
-                                    }
+                                    starNumber = GetStarNumber(
+                                        difficultyItem,
+                                        json,
+                                    );
+
                                     var stats =
                                         difficultyItem.querySelector(".stats");
                                     console.log(stats);
@@ -183,7 +106,6 @@ function core() {
     }
 }
 
-/*
 function GetStarNumber(difficultyItem, json) {
     let starNumber = "";
 
@@ -204,18 +126,23 @@ function GetStarNumber(difficultyItem, json) {
     }
     return starNumber;
 }
-*/
 
-/*
 function GetStarNumberHelper(difficultyItem, difficulty, json) {
+    // 変数使うにはCSS.escapeでくくらないと、Uncaught DOMException:
+    // Failed to execute 'querySelectorAll' on 'Document'のエラー出てくる
     const characteristicImg = difficultyItem.querySelector(
-        `img[title~=${difficulty}]`,
+        `img[title~=${CSS.escape(difficulty)}]`,
     );
+
+    console.log(difficulty);
+
     const characteristic = characteristicImg
         .getAttribute("title")
         .replace(`${difficulty} `, "");
+
+    if (difficulty == "Expert+") difficulty = "ExpertPlus";
+
     const starNumber = json[`${characteristic}-${difficulty}`];
     console.log(starNumber);
     return starNumber;
 }
-*/
