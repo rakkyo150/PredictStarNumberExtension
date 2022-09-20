@@ -101,6 +101,16 @@ function SwapForLeaderboard(jsInitCheckTimer) {
                 characteristic = "Standard";
             } else if (b.textContent.includes("Lawless")) {
                 characteristic = "Lawless";
+            } else if (b.textContent.includes("Lightshow")) {
+                characteristic = "Lightshow";
+            } else if (b.textContent.includes("NoArrows")) {
+                characteristic = "NoArrows";
+            } else if (b.textContent.includes("OneSaber")) {
+                characteristic = "OneSaber";
+            } else if (b.textContent.includes("90Degree")) {
+                characteristic = "90Degree";
+            } else if (b.textContent.includes("360Degree")) {
+                characteristic = "360Degree";
             }
         });
     }
