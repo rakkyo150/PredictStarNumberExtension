@@ -71,7 +71,7 @@ function SwapForMapList(jsInitCheckTimer) {
         const leaderboardId = leaderboardIdElement
             .getAttribute("href")
             .replace("/leaderboard/", "");
-        const endpoint = `https://predictstarnumber.herokuapp.com/api2/leaderboardId/${leaderboardId}`;
+        const endpoint = `https://predictstarnumber.onrender.com/api2/leaderboardId/${leaderboardId}`;
 
         // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
         SwapTagName(endpoint, "Standard", beforeTag);
@@ -130,7 +130,7 @@ function SwapForLeaderboard(jsInitCheckTimer) {
     const leaderboardId = leaderboardIdElement
         .getAttribute("href")
         .replace("/leaderboard/", "");
-    const endpoint = `https://predictstarnumber.herokuapp.com/api2/leaderboardId/${leaderboardId}`;
+    const endpoint = `https://predictstarnumber.onrender.com/api2/leaderboardId/${leaderboardId}`;
     SwapTagName(endpoint, characteristic, beforeTag);
 
     clearInterval(jsInitCheckTimer);

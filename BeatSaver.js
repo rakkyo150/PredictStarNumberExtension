@@ -43,7 +43,7 @@ function core() {
             return;
         }
 
-        const endpoint = `https://predictstarnumber.herokuapp.com/api2/id/${id}`;
+        const endpoint = `https://predictstarnumber.onrender.com/api2/id/${id}`;
         fetch(endpoint, {
             mode: "cors",
             method: "GET",
