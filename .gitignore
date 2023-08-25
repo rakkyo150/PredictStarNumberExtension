@@ -4,3 +4,9 @@ node_modules
 yarn.lock
 .eslintrc.json
 .prettierrc
+
+
+# Added by cargo
+
+/target
+/Cargo.lock
