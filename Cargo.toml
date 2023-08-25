@@ -10,12 +10,19 @@ crate-type = ["cdylib"]
 
 [dependencies]
 getrandom = { version = "0.2.10", features = ["js"] }
-reqwest = { version = "0.11.20", features = ["json", "blocking"] }
+once_cell = "1.18.0"
+reqwest = "0.11.20"
+reqwest-wasm = "0.11.16"
 serde = { version = "1.0.186", features = ["derive"] }
 serde_json = "1.0.105"
 tract-onnx = "0.20.7"
 wasm-bindgen = "0.2.87"
+wasm-bindgen-futures = "0.4.37"
+
+[dependencies.zip]
+default-features = false
 zip = "0.6.6"
 
 [dev-dependencies]
 lazy_static = "1.4.0"
+tokio = { version = "1.32.0", features = ["macros"] }

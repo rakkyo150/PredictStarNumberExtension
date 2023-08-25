@@ -16,18 +16,18 @@ pub struct StarPredictor {
 #[wasm_bindgen]
 impl  StarPredictor {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> StarPredictor {
-        let model_buf: Vec<u8> = load_model().unwrap();
-        let map_data_hash_map = make_half_baked_data();
+    pub async fn new() -> StarPredictor {
+        let model_buf: Vec<u8> = load_model().await.unwrap();
+        let map_data_hash_map = make_half_baked_data().await;
         StarPredictor { model_buf, map_data_hash_map }
     }
 
-    pub fn get_predicted_values_by_hash(&mut self, hash: &str, characteristic: &str, difficulty: &str) -> f64 {
+    pub async fn get_predicted_values_by_hash(&mut self, hash: &str, characteristic: &str, difficulty: &str) -> f64 {
         match self.map_data_hash_map.keys().find(|&key| key.hash == hash && key.characteristic == characteristic && key.difficulty == difficulty)
         {
             Some(key) => {
                 let record = self.map_data_hash_map.get(key).unwrap();
-                get_predicted_values(record, &mut self.model_buf)
+                get_predicted_values(record, &mut self.model_buf).await
             },
             None => {
                 println!("hash not found");
@@ -36,12 +36,12 @@ impl  StarPredictor {
         }
     }
 
-    pub fn get_predicted_values_by_id(&mut self, id: &str, characteristic: &str, difficulty: &str) -> f64 {
+    pub async fn get_predicted_values_by_id(&mut self, id: &str, characteristic: &str, difficulty: &str) -> f64 {
         match self.map_data_hash_map.keys().find(|&key| key.id == id && key.characteristic == characteristic && key.difficulty == difficulty)
         {
             Some(key) => {
                 let record = self.map_data_hash_map.get(key).unwrap();
-                get_predicted_values(record, &mut self.model_buf)
+                get_predicted_values(record, &mut self.model_buf).await
             },
             None => {
                 println!("id not found");
@@ -51,16 +51,15 @@ impl  StarPredictor {
     }
 }
 
-fn make_half_baked_data() ->  HashMap<MapKey, MapData> {
+async fn make_half_baked_data() ->  HashMap<MapKey, MapData> {
     let endpoint = "https://github.com/andruzzzhka/BeatSaberScrappedData/raw/master/combinedScrappedData.zip";
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::Client::new();
     // endpointからzipを取得して展開して中にあるjsonファイルを読み込む
-    let mut response = match client.get(endpoint).send() {
+    let response = match client.get(endpoint).send().await {
         Ok(response) => response,
         Err(e) => panic!("Error: {}", e),
     };
-    let mut buf = Vec::new();
-    response.read_to_end(&mut buf).unwrap();
+    let buf = response.bytes().await.unwrap().to_vec();
     println!("buf.len(): {}", buf.len());
     let mut archive = zip::ZipArchive::new(std::io::Cursor::new(buf)).unwrap();
     let mut json_file = archive.by_name("combinedScrappedData.json").unwrap();
@@ -85,15 +84,14 @@ fn make_map_data_hash_map(json: serde_json::Value) -> HashMap<MapKey,MapData> {
     map_data_hash_map
 }
 
-fn load_model() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+async fn load_model() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let model_asset_endpoint = "https://github.com/rakkyo150/PredictStarNumberHelper/releases/latest/download/model.onnx";
-    let client = reqwest::blocking::Client::new();
-    let mut model_asset_response= match client.get(model_asset_endpoint).send() {
+    let client = reqwest::Client::new();
+    let model_asset_response= match client.get(model_asset_endpoint).send().await {
         Ok(response) => response,
         Err(e) => panic!("Error: {}", e),
     };
-    let mut buf = Vec::new();
-    model_asset_response.read_to_end(&mut buf)?;
+    let buf = model_asset_response.bytes().await.unwrap().to_vec();
 
     /*
     let model_file_path = Path::new("model.pickle");
@@ -104,10 +102,10 @@ fn load_model() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     Ok(buf)
 }
 
-fn get_predicted_values(record: &MapData, model_buf: &mut Vec<u8> ) -> f64 {
+async fn get_predicted_values(record: &MapData, model_buf: &mut Vec<u8> ) -> f64 {
     if model_buf.len() == 0 {
         println!("load model");
-        *model_buf = load_model().unwrap();
+        *model_buf = load_model().await.unwrap();
     }
     let model = onnx().model_for_read(&mut BufReader::new(&model_buf[..]))
         .unwrap()
@@ -193,42 +191,44 @@ struct MapData {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
-    use lazy_static::lazy_static;
 
-    lazy_static! {
-        static ref PREDICTOR: Mutex<StarPredictor> = Mutex::new(StarPredictor::new());
-    }
-
-    #[test]
-    fn non_exisiting_hash() {
+    #[tokio::test]
+    async fn non_exisiting_hash() {
+        let mut result = StarPredictor::new().await;
         let hash = "-1";
-        let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_hash(hash, "Standard", "Hard");
-        println!("predicted_value: {}", predicted_value);
-        assert_eq!(predicted_value, 0.0);
+        let predicted_value = result.get_predicted_values_by_hash(hash, "Standard", "Hard");
+        let value = predicted_value.await;
+        println!("predicted_value: {}", value);
+        assert_eq!(value, 0.0);
     }
 
-    #[test]
-    fn exisiting_hash() {
+    #[tokio::test]
+    async fn exisiting_hash() {
+        let mut result = StarPredictor::new().await;
         let hash = "FDA568FC27C20D21F8DC6F3709B49B5CC96723BE";
-        let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_hash(hash, "Standard", "Hard");
-        println!("predicted_value: {}", predicted_value);
-        assert_ne!(predicted_value, 0.0);
+        let predicted_value = result.get_predicted_values_by_hash(hash, "Standard", "Hard");
+        let value = predicted_value.await;
+        println!("predicted_value: {}", value);
+        assert_ne!(value, 0.0);
     }
 
-    #[test]
-    fn non_exisiting_id() {
+    #[tokio::test]
+    async fn non_exisiting_id() {
+        let mut result = StarPredictor::new().await;
         let id = "-1";
-        let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_id(id, "Standard", "Hard");
-        println!("predicted_value: {}", predicted_value);
-        assert_eq!(predicted_value, 0.0);
+        let predicted_value = result.get_predicted_values_by_id(id, "Standard", "Hard");
+        let value = predicted_value.await;
+        println!("predicted_value: {}", value);
+        assert_eq!(value, 0.0);
     }
 
-    #[test]
-    fn exisiting_id() {
+    #[tokio::test]
+    async fn exisiting_id() {
+        let mut result = StarPredictor::new().await;
         let id = "1";
-        let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_id(id, "Standard", "Hard");
-        println!("predicted_value: {}", predicted_value);
-        assert_ne!(predicted_value, 0.0);
+        let predicted_value = result.get_predicted_values_by_id(id, "Standard", "Hard");
+        let value = predicted_value.await;
+        println!("predicted_value: {}", value);
+        assert_ne!(value, 0.0);
     }
 }
