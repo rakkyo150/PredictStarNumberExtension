@@ -108,7 +108,7 @@ function SwapForLeaderboard(jsInitCheckTimer: number) {
         let content = cardContent!.querySelector(".content");
         let bs = content!.querySelectorAll("b");
         bs.forEach((b) => {
-            characteristic = b.textContent! as Characteristic;
+            characteristic = b.textContent!.replace("Solo", "") as Characteristic;
         });
     }
 
