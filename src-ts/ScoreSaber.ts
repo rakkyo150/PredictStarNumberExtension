@@ -1,5 +1,17 @@
 window.onload = startScoreSaber;
 
+const Characteristic = {
+    Standard: "Standard",
+    Lawless: "Lawless",
+    Lightshow: "Lightshow",
+    NoArrows: "NoArrows",
+    OneSaber: "OneSaber",
+    "90Degree": "90Degree",
+    "360Degree": "360Degree",
+} as const;
+
+type Characteristic = (typeof Characteristic)[keyof typeof Characteristic];
+
 function startScoreSaber() {
     let lastUrl = "";
     console.log(lastUrl);
@@ -74,7 +86,7 @@ function SwapForMapList(jsInitCheckTimer: number) {
         const endpoint = `https://predictstarnumber.onrender.com/api2/leaderboardId/${leaderboardId}`;
 
         // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
-        SwapTagName(endpoint, "Standard", beforeTag!);
+        SwapTagName(endpoint, Characteristic.Standard, beforeTag!);
     });
     clearInterval(jsInitCheckTimer);
 }
@@ -88,30 +100,16 @@ function SwapForLeaderboard(jsInitCheckTimer: number) {
     )
         return;
 
-    let characteristic = "";
+    let characteristic: Characteristic = Characteristic.Standard;
 
     // ランク譜面でLawlessは今までないので（そういう決まり？）
-    if (location.href.includes(requestUrl)) characteristic = "Standard";
+    if (location.href.includes(requestUrl)) characteristic = Characteristic.Standard;
     else {
         let cardContent = document.querySelector(".window.card-content");
         let content = cardContent!.querySelector("div.content");
         let bs = content!.querySelectorAll("b");
         bs.forEach((b) => {
-            if (b.textContent!.includes("Standard")) {
-                characteristic = "Standard";
-            } else if (b.textContent!.includes("Lawless")) {
-                characteristic = "Lawless";
-            } else if (b.textContent!.includes("Lightshow")) {
-                characteristic = "Lightshow";
-            } else if (b.textContent!.includes("NoArrows")) {
-                characteristic = "NoArrows";
-            } else if (b.textContent!.includes("OneSaber")) {
-                characteristic = "OneSaber";
-            } else if (b.textContent!.includes("90Degree")) {
-                characteristic = "90Degree";
-            } else if (b.textContent!.includes("360Degree")) {
-                characteristic = "360Degree";
-            }
+            characteristic = b.textContent! as Characteristic;
         });
     }
 
@@ -136,7 +134,7 @@ function SwapForLeaderboard(jsInitCheckTimer: number) {
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapTagName(endpoint: string, characteristic: string, beforeTag: Element) {
+function SwapTagName(endpoint: string, characteristic: Characteristic, beforeTag: Element) {
     const difficulty = beforeTag.getAttribute("title");
 
     fetch(endpoint, {
