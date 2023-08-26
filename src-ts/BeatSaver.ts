@@ -1,9 +1,22 @@
+import { loadModel, makeHalfBakedData } from "./fetcher";
+import { Predictor } from "./predictor";
+import { StarPredictor } from "../pkg/predict_star_number_extension";
+
 window.onload = startBeatSaver;
 
 function startBeatSaver() {
     console.log("start");
     let lastUrl = "";
     const main = document.querySelector("main");
+
+    if(Predictor.predictor == null) {
+        console.log("predictorがnullです");
+        loadModel().then((model) => {
+            makeHalfBakedData().then((data) => {
+                Predictor.predictor = new StarPredictor(model, data);
+            }).catch((err) => console.log(err.message));
+        }).catch((err) => console.log(err.message));
+    }
 
     const mo = new MutationObserver(function () {
         const url = location.href;

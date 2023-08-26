@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 
-async function makeHalfBakedData() {
+export async function makeHalfBakedData() {
   const endpoint = "https://github.com/andruzzzhka/BeatSaberScrappedData/raw/master/combinedScrappedData.zip";
   const response = await fetch(endpoint);
   const buf = await response.arrayBuffer();
@@ -12,7 +12,7 @@ async function makeHalfBakedData() {
   return jsonStr;
 }
 
-async function loadModel() {
+export async function loadModel() {
   const modelAssetEndpoint = "https://github.com/rakkyo150/PredictStarNumberHelper/releases/latest/download/model.onnx";
   const response = await fetch(modelAssetEndpoint);
   const buf = await response.arrayBuffer();

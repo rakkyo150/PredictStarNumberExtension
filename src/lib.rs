@@ -54,6 +54,7 @@ impl  StarPredictor {
         StarPredictor { model_buf, map_data_hash_map }
     }
 
+    #[wasm_bindgen]
     pub fn get_predicted_values_by_hash(&mut self, hash: &str, characteristic: &str, difficulty: &str) -> f64 {
         match self.map_data_hash_map.keys().find(|&key| key.hash == hash && key.characteristic == characteristic && key.difficulty == difficulty)
         {
@@ -68,6 +69,7 @@ impl  StarPredictor {
         }
     }
 
+    #[wasm_bindgen]
     pub fn get_predicted_values_by_id(&mut self, id: &str, characteristic: &str, difficulty: &str) -> f64 {
         match self.map_data_hash_map.keys().find(|&key| key.id == id && key.characteristic == characteristic && key.difficulty == difficulty)
         {

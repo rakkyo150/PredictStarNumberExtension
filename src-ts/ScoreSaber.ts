@@ -1,3 +1,7 @@
+import { Predictor } from "./predictor";
+import { StarPredictor } from "../pkg/predict_star_number_extension";
+import { loadModel ,makeHalfBakedData } from "./fetcher";
+
 window.onload = startScoreSaber;
 
 const Characteristic = {
@@ -71,8 +75,6 @@ function SwapForMapList(jsInitCheckTimer: number) {
 
     const mapCards = document.querySelectorAll(".song-container");
     mapCards.forEach((mapCard) => {
-        console.log("pass");
-        console.log(mapCard);
         const beforeTag = mapCard.querySelector(".tag");
         const rank = beforeTag!.textContent;
 
@@ -108,14 +110,13 @@ function SwapForLeaderboard(jsInitCheckTimer: number) {
         let content = cardContent!.querySelector(".content");
         let bs = content!.querySelectorAll("b");
         bs.forEach((b) => {
-            characteristic = b.textContent!.replace("Solo", "") as Characteristic;
+            characteristic = b.textContent!.replace("Solo", "").replace("HD","") as Characteristic;
         });
     }
 
     const mapCard = document.querySelector(".media-content.is-clipped");
     const beforeTag = mapCard!.querySelector("div.tag");
     const rank = beforeTag!.textContent;
-    console.log("pass?");
 
     if (rank!.includes("★") && !rank!.includes(")★")) {
         clearInterval(jsInitCheckTimer);
@@ -138,39 +139,21 @@ function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: El
     console.log(hash);
     console.log(characteristic);
 
-    fetch(hash, {
-        mode: "cors",
-        method: "GET",
-    })
-        .then((response) => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                throw new Error(response.statusText);
-            }
-        })
-        .then((json) => {
-            let predictStar;
-            console.log(json);
-            if (difficulty == "Easy") {
-                predictStar = "(" + json[`${characteristic}-Easy`] + ")★";
-            } else if (difficulty == "Normal") {
-                predictStar = "(" + json[`${characteristic}-Normal`] + ")★";
-            } else if (difficulty == "Hard") {
-                predictStar = "(" + json[`${characteristic}-Hard`] + ")★";
-            } else if (difficulty == "Expert") {
-                predictStar = "(" + json[`${characteristic}-Expert`] + ")★";
-            } else if (difficulty == "Expert+") {
-                predictStar = "(" + json[`${characteristic}-ExpertPlus`] + ")★";
-            }
-            // 念のため
-            else {
-                predictStar = "?";
-            }
-            beforeTag.textContent = predictStar;
-        })
-        .catch((err) => {
-            console.log(err.message);
-            beforeTag.textContent = "?";
-        });
+    if(Predictor.predictor != null) {
+        console.log("predictorがnullではありません");
+        let value = Predictor.predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
+        console.log(value);
+        beforeTag.textContent = value + "★";
+    }
+    else {
+        console.log("predictorがnullです");
+        loadModel().then((model) => {
+            makeHalfBakedData().then((data) => {
+                Predictor.predictor = new StarPredictor(model, data);
+                let value = Predictor.predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
+                console.log(value);
+                beforeTag.textContent = value + "★";
+            }).catch((err) => console.log(err.message));
+        }).catch((err) => console.log(err.message));
+    }
 }
