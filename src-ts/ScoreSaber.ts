@@ -78,15 +78,14 @@ function SwapForMapList(jsInitCheckTimer: number) {
 
         if (rank!.includes("★") && !rank!.includes(")★")) return;
 
-        const songInfo = mapCard.querySelector(".song-info");
-        const leaderboardIdElement = songInfo!.querySelector("a");
-        const leaderboardId = leaderboardIdElement!
-            .getAttribute("href")!
-            .replace("/leaderboard/", "");
-        const endpoint = `https://predictstarnumber.onrender.com/api2/leaderboardId/${leaderboardId}`;
+        const songInfo = mapCard.querySelector(".song-image");
+        const hash = songInfo!
+            .getAttribute("src")!
+            .replace("https://cdn.scoresaber.com/covers/", "")
+            .replace(".png", "");
 
         // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
-        SwapTagName(endpoint, Characteristic.Standard, beforeTag!);
+        SwapTagName(hash, Characteristic.Standard, beforeTag!);
     });
     clearInterval(jsInitCheckTimer);
 }
@@ -101,12 +100,12 @@ function SwapForLeaderboard(jsInitCheckTimer: number) {
         return;
 
     let characteristic: Characteristic = Characteristic.Standard;
+    let cardContent = document.querySelector(".window.card-content");
 
     // ランク譜面でLawlessは今までないので（そういう決まり？）
     if (location.href.includes(requestUrl)) characteristic = Characteristic.Standard;
     else {
-        let cardContent = document.querySelector(".window.card-content");
-        let content = cardContent!.querySelector("div.content");
+        let content = cardContent!.querySelector(".content");
         let bs = content!.querySelectorAll("b");
         bs.forEach((b) => {
             characteristic = b.textContent! as Characteristic;
@@ -123,21 +122,23 @@ function SwapForLeaderboard(jsInitCheckTimer: number) {
         return;
     }
 
-    const titleElement = mapCard!.querySelector(".title");
-    const leaderboardIdElement = titleElement!.querySelector("a");
-    const leaderboardId = leaderboardIdElement!
-        .getAttribute("href")!
-        .replace("/leaderboard/", "");
-    const endpoint = `https://predictstarnumber.onrender.com/api2/leaderboardId/${leaderboardId}`;
-    SwapTagName(endpoint, characteristic, beforeTag!);
+    const imageElement = cardContent!.querySelector(".image");
+    const hash = imageElement!
+        .querySelector("img")!
+        .getAttribute("src")!
+        .replace("https://cdn.scoresaber.com/covers/", "")
+        .replace(".png", "");
+    SwapTagName(hash, characteristic, beforeTag!);
 
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapTagName(endpoint: string, characteristic: Characteristic, beforeTag: Element) {
+function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: Element) {
     const difficulty = beforeTag.getAttribute("title");
+    console.log(hash);
+    console.log(characteristic);
 
-    fetch(endpoint, {
+    fetch(hash, {
         mode: "cors",
         method: "GET",
     })
