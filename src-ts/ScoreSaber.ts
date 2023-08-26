@@ -144,6 +144,8 @@ function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: El
         let value = Predictor.predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
         console.log(value);
         beforeTag.textContent = value + "★";
+        console.log(value);
+        beforeTag.textContent = value + "★";
     }
     else {
         console.log("predictorがnullです");

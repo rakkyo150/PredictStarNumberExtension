@@ -16,6 +16,7 @@ pub struct StarPredictor {
 #[derive(Debug, Deserialize)]
 #[derive(Eq, Hash, PartialEq)]
 #[allow(dead_code, non_snake_case)]
+#[wasm_bindgen]
 struct MapKey {
     id: String,
     hash: String,
@@ -26,6 +27,7 @@ struct MapKey {
 
 #[derive(Debug, Deserialize)]
 #[allow(dead_code, non_snake_case)]
+#[wasm_bindgen]
 struct MapData {
     bpm: f64,
     duration: f64,
@@ -54,7 +56,6 @@ impl  StarPredictor {
         StarPredictor { model_buf, map_data_hash_map }
     }
 
-    #[wasm_bindgen]
     pub fn get_predicted_values_by_hash(&mut self, hash: &str, characteristic: &str, difficulty: &str) -> f64 {
         match self.map_data_hash_map.keys().find(|&key| key.hash == hash && key.characteristic == characteristic && key.difficulty == difficulty)
         {
@@ -69,7 +70,6 @@ impl  StarPredictor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn get_predicted_values_by_id(&mut self, id: &str, characteristic: &str, difficulty: &str) -> f64 {
         match self.map_data_hash_map.keys().find(|&key| key.id == id && key.characteristic == characteristic && key.difficulty == difficulty)
         {
@@ -162,7 +162,7 @@ mod tests {
     }
 
     fn load_model() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-        let model_asset_endpoint = "https://github.com/rakkyo150/PredictStarNumberHelper/releases/latest/download/model.onnx";
+        let model_asset_endpoint = "https://raw.githubusercontent.com/rakkyo150/PredictStarNumberHelper/master/model.onnx";
         let client = reqwest::blocking::Client::new();
         let mut model_asset_response= match client.get(model_asset_endpoint).send() {
             Ok(response) => response,
@@ -181,7 +181,7 @@ mod tests {
     }
 
     fn make_half_baked_data() ->  String {
-        let endpoint = "https://github.com/andruzzzhka/BeatSaberScrappedData/raw/master/combinedScrappedData.zip";
+        let endpoint = "https://raw.githubusercontent.com/andruzzzhka/BeatSaberScrappedData/master/combinedScrappedData.zip";
         let client = reqwest::blocking::Client::new();
         // endpointからzipを取得して展開して中にあるjsonファイルを読み込む
         let mut response = match client.get(endpoint).send() {

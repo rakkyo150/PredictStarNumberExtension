@@ -9,7 +9,7 @@
                 "https://beatsaver.com/*"
             ],
             "js": [
-                "dist/BeatSaver.js"
+                "BeatSaver.js"
             ],
             "run_at": "document_end",
             "all_frames": true
@@ -19,7 +19,7 @@
                 "https://scoresaber.com/*"
             ],
             "js": [
-                "dist/ScoreSaber.js"
+                "ScoreSaber.js"
             ],
             "run_at": "document_end",
             "all_frames": true
