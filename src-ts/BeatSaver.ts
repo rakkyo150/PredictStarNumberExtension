@@ -1,6 +1,6 @@
-window.onload = start;
+window.onload = startBeatSaver;
 
-function start() {
+function startBeatSaver() {
     console.log("start");
     let lastUrl = "";
     const main = document.querySelector("main");
@@ -16,7 +16,7 @@ function start() {
     const config = {
         childList: true,
     };
-    mo.observe(main, config);
+    mo.observe(main!, config);
 }
 
 function core() {
@@ -33,10 +33,10 @@ function core() {
             return;
         }
 
-        const oneClickUrl = document
-            .querySelector('a[title="One-Click"]')
+        const oneClickUrl = document!
+            .querySelector('a[title="One-Click"]')!
             .getAttribute("href");
-        const id = oneClickUrl.replace("beatsaver://", "");
+        const id = oneClickUrl!.replace("beatsaver://", "");
         if (id == null) {
             console.log("idを取得できませんでした");
             clearInterval(jsInitCheckTimer);
@@ -58,7 +58,7 @@ function core() {
             .then((json) => {
                 const mapStats = document.querySelector(".mapstats");
                 const difficultyList =
-                    mapStats.querySelectorAll(".list-group-item");
+                    mapStats!.querySelectorAll(".list-group-item");
 
                 if (difficultyList == null) {
                     console.log("マップの種類を取得できませんでした");
@@ -97,7 +97,7 @@ function core() {
     }
 }
 
-function SetStyle(starSpan) {
+function SetStyle(starSpan: HTMLSpanElement) {
     starSpan.style.margin = "0px auto";
     starSpan.style.paddingLeft = "5px";
     starSpan.style.paddingRight = "5px";
@@ -106,7 +106,7 @@ function SetStyle(starSpan) {
     starSpan.style.textAlign = "center";
 }
 
-function GetStarNumber(difficultyItem, json) {
+function GetStarNumber(difficultyItem: Element, json: any) {
     let starNumber = "";
 
     if (difficultyItem.querySelector('img[title~="Expert+"]') != null) {
@@ -127,7 +127,7 @@ function GetStarNumber(difficultyItem, json) {
     return starNumber;
 }
 
-function GetStarNumberHelper(difficultyItem, difficulty, json) {
+function GetStarNumberHelper(difficultyItem: Element, difficulty: string, json: any) {
     // 変数使うにはCSS.escapeでくくらないと、Uncaught DOMException:
     // Failed to execute 'querySelectorAll' on 'Document'のエラー出てくる
     const characteristicImg = difficultyItem.querySelector(
@@ -136,8 +136,8 @@ function GetStarNumberHelper(difficultyItem, difficulty, json) {
 
     console.log(difficulty);
 
-    const characteristic = characteristicImg
-        .getAttribute("title")
+    const characteristic = characteristicImg!
+        .getAttribute("title")!
         .replace(`${difficulty} `, "");
 
     if (difficulty == "Expert+") difficulty = "ExpertPlus";

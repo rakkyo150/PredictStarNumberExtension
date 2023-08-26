@@ -1,6 +1,6 @@
-window.onload = start;
+window.onload = startScoreSaber;
 
-function start() {
+function startScoreSaber() {
     let lastUrl = "";
     console.log(lastUrl);
 
@@ -18,7 +18,7 @@ function start() {
         subtree: true,
         attributes: true,
     };
-    mo.observe(body, config);
+    mo.observe(body!, config);
 }
 
 function main() {
@@ -48,7 +48,7 @@ function main() {
     }
 }
 
-function SwapForMapList(jsInitCheckTimer) {
+function SwapForMapList(jsInitCheckTimer: number) {
     const mapListUrl = "https://scoresaber.com/leaderboards";
     const usersMapListUrl = "https://scoresaber.com/u";
     if (
@@ -62,24 +62,24 @@ function SwapForMapList(jsInitCheckTimer) {
         console.log("pass");
         console.log(mapCard);
         const beforeTag = mapCard.querySelector(".tag");
-        const rank = beforeTag.textContent;
+        const rank = beforeTag!.textContent;
 
-        if (rank.includes("★") && !rank.includes(")★")) return;
+        if (rank!.includes("★") && !rank!.includes(")★")) return;
 
         const songInfo = mapCard.querySelector(".song-info");
-        const leaderboardIdElement = songInfo.querySelector("a");
-        const leaderboardId = leaderboardIdElement
-            .getAttribute("href")
+        const leaderboardIdElement = songInfo!.querySelector("a");
+        const leaderboardId = leaderboardIdElement!
+            .getAttribute("href")!
             .replace("/leaderboard/", "");
         const endpoint = `https://predictstarnumber.onrender.com/api2/leaderboardId/${leaderboardId}`;
 
         // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
-        SwapTagName(endpoint, "Standard", beforeTag);
+        SwapTagName(endpoint, "Standard", beforeTag!);
     });
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapForLeaderboard(jsInitCheckTimer) {
+function SwapForLeaderboard(jsInitCheckTimer: number) {
     const leaderboardUrl = "https://scoresaber.com/leaderboard";
     const requestUrl = "https://scoresaber.com/ranking/request";
     if (
@@ -94,49 +94,49 @@ function SwapForLeaderboard(jsInitCheckTimer) {
     if (location.href.includes(requestUrl)) characteristic = "Standard";
     else {
         let cardContent = document.querySelector(".window.card-content");
-        let content = cardContent.querySelector("div.content");
-        let bs = content.querySelectorAll("b");
+        let content = cardContent!.querySelector("div.content");
+        let bs = content!.querySelectorAll("b");
         bs.forEach((b) => {
-            if (b.textContent.includes("Standard")) {
+            if (b.textContent!.includes("Standard")) {
                 characteristic = "Standard";
-            } else if (b.textContent.includes("Lawless")) {
+            } else if (b.textContent!.includes("Lawless")) {
                 characteristic = "Lawless";
-            } else if (b.textContent.includes("Lightshow")) {
+            } else if (b.textContent!.includes("Lightshow")) {
                 characteristic = "Lightshow";
-            } else if (b.textContent.includes("NoArrows")) {
+            } else if (b.textContent!.includes("NoArrows")) {
                 characteristic = "NoArrows";
-            } else if (b.textContent.includes("OneSaber")) {
+            } else if (b.textContent!.includes("OneSaber")) {
                 characteristic = "OneSaber";
-            } else if (b.textContent.includes("90Degree")) {
+            } else if (b.textContent!.includes("90Degree")) {
                 characteristic = "90Degree";
-            } else if (b.textContent.includes("360Degree")) {
+            } else if (b.textContent!.includes("360Degree")) {
                 characteristic = "360Degree";
             }
         });
     }
 
     const mapCard = document.querySelector(".media-content.is-clipped");
-    const beforeTag = mapCard.querySelector("div.tag");
-    const rank = beforeTag.textContent;
+    const beforeTag = mapCard!.querySelector("div.tag");
+    const rank = beforeTag!.textContent;
     console.log("pass?");
 
-    if (rank.includes("★") && !rank.includes(")★")) {
+    if (rank!.includes("★") && !rank!.includes(")★")) {
         clearInterval(jsInitCheckTimer);
         return;
     }
 
-    const titleElement = mapCard.querySelector(".title");
-    const leaderboardIdElement = titleElement.querySelector("a");
-    const leaderboardId = leaderboardIdElement
-        .getAttribute("href")
+    const titleElement = mapCard!.querySelector(".title");
+    const leaderboardIdElement = titleElement!.querySelector("a");
+    const leaderboardId = leaderboardIdElement!
+        .getAttribute("href")!
         .replace("/leaderboard/", "");
     const endpoint = `https://predictstarnumber.onrender.com/api2/leaderboardId/${leaderboardId}`;
-    SwapTagName(endpoint, characteristic, beforeTag);
+    SwapTagName(endpoint, characteristic, beforeTag!);
 
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapTagName(endpoint, characteristic, beforeTag) {
+function SwapTagName(endpoint: string, characteristic: string, beforeTag: Element) {
     const difficulty = beforeTag.getAttribute("title");
 
     fetch(endpoint, {

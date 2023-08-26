@@ -7,7 +7,7 @@ async function makeHalfBakedData() {
   console.log("buf.length: ", buf.byteLength);
   const zip = new JSZip();
   const zipFile = await zip.loadAsync(buf);
-  const jsonStr = await zipFile.file("combinedScrappedData.json").async("text");
+  const jsonStr = await zipFile.file("combinedScrappedData.json")!.async("text");
 
   return jsonStr;
 }
