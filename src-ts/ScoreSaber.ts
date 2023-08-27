@@ -137,8 +137,7 @@ function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: El
     const difficulty = beforeTag.getAttribute("title");
     console.log(hash);
     console.log(characteristic);
-
-    console.log("predictorがnullです");
+    beforeTag.textContent = "...";
 
     loadModel().then((model) => {
         makeHalfBakedData().then((data) => {
@@ -147,12 +146,30 @@ function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: El
             console.log(a);
             init(a).then(() => {
                 console.log("wasmのロードが完了しました");
-                let predictor = new StarPredictor(model, data);
-                console.log("predictorを作成しました");
-                let value = predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
-                console.log(value);
-                beforeTag.textContent = value + "★";
+                chrome.storage.local.get("StarPredictor", function (value) {
+                    let predictor = value["StarPredictor"] as StarPredictor;
+                    console.log(predictor);
+                    if (predictor == null){
+                        let predictor = new StarPredictor(model, data);
+                        console.log("predictorを作成しました");
+                        let value = predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
+                        console.log(value);
+                        beforeTag.textContent = value + "★";
+                        setStarPredictor(predictor);
+                    }
+                    else{
+                        console.log("predictorがnullではありません");
+                        let value = predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
+                        console.log(value);
+                        beforeTag.textContent = value + "★";
+                    }
+                });
             });
         }).catch((err) => console.log(err.message));
     }).catch((err) => console.log(err.message));
+}
+
+function setStarPredictor(star_predictor: StarPredictor) {
+    chrome.storage.local.set({'StarPredictor': star_predictor}, function () {
+    });
 }
