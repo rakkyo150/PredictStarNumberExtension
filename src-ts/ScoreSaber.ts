@@ -1,6 +1,5 @@
-import { Predictor } from "./predictor";
-import { StarPredictor } from "../pkg/predict_star_number_extension";
 import { loadModel ,makeHalfBakedData } from "./fetcher";
+import init, { StarPredictor } from "../pkg/predict_star_number_extension";
 
 window.onload = startScoreSaber;
 
@@ -64,7 +63,7 @@ function main() {
     }
 }
 
-function SwapForMapList(jsInitCheckTimer: number) {
+function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout) {
     const mapListUrl = "https://scoresaber.com/leaderboards";
     const usersMapListUrl = "https://scoresaber.com/u";
     if (
@@ -92,7 +91,7 @@ function SwapForMapList(jsInitCheckTimer: number) {
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapForLeaderboard(jsInitCheckTimer: number) {
+function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
     const leaderboardUrl = "https://scoresaber.com/leaderboard";
     const requestUrl = "https://scoresaber.com/ranking/request";
     if (
@@ -139,23 +138,21 @@ function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: El
     console.log(hash);
     console.log(characteristic);
 
-    if(Predictor.predictor != null) {
-        console.log("predictorがnullではありません");
-        let value = Predictor.predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
-        console.log(value);
-        beforeTag.textContent = value + "★";
-        console.log(value);
-        beforeTag.textContent = value + "★";
-    }
-    else {
-        console.log("predictorがnullです");
-        loadModel().then((model) => {
-            makeHalfBakedData().then((data) => {
-                Predictor.predictor = new StarPredictor(model, data);
-                let value = Predictor.predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
+    console.log("predictorがnullです");
+
+    loadModel().then((model) => {
+        makeHalfBakedData().then((data) => {
+            console.log("modelとdataのロードが完了しました");
+            let a = chrome.runtime.getURL('6916493a189316cf15dc.wasm');
+            console.log(a);
+            init(a).then(() => {
+                console.log("wasmのロードが完了しました");
+                let predictor = new StarPredictor(model, data);
+                console.log("predictorを作成しました");
+                let value = predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
                 console.log(value);
                 beforeTag.textContent = value + "★";
-            }).catch((err) => console.log(err.message));
+            });
         }).catch((err) => console.log(err.message));
-    }
+    }).catch((err) => console.log(err.message));
 }

@@ -1,14 +1,11 @@
-const path = require('path')
-const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin")
+const path = require('path');
+const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   mode: 'development',
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".jsx", "wasm"]
-  },
-  experiments: {
-    asyncWebAssembly: true
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".wasm"],
   },
   devtool: 'cheap-module-source-map',
   entry: {ScoreSaber: './src-ts/ScoreSaber.ts', BeatSaver: './src-ts/BeatSaver.ts'},
