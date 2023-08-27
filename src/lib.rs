@@ -1,23 +1,25 @@
 use std::collections::HashMap;
 use std::io::BufReader;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tract_onnx::onnx;
 use tract_onnx::prelude::{Framework, InferenceFact, tvec, InferenceModelExt, Tensor, Datum};
 use tract_onnx::tract_hir::tract_ndarray::Array2;
+use serde_json_any_key::*;
 
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct StarPredictor {
     model_buf: Vec<u8>,
     map_data_hash_map: HashMap<MapKey, MapData>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[derive(Eq, Hash, PartialEq)]
 #[allow(dead_code, non_snake_case)]
 #[wasm_bindgen]
-struct MapKey {
+pub struct MapKey {
     id: String,
     hash: String,
     name: String,
@@ -25,10 +27,10 @@ struct MapKey {
     difficulty: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[allow(dead_code, non_snake_case)]
 #[wasm_bindgen]
-struct MapData {
+pub struct MapData {
     bpm: f64,
     duration: f64,
     difficulty: String,
@@ -54,6 +56,16 @@ impl  StarPredictor {
         let model_buf: Vec<u8> = model;
         let map_data_hash_map = make_map_data_hash_map(json_str);
         StarPredictor { model_buf, map_data_hash_map }
+    }
+
+    pub fn model_getter(&self) -> Vec<u8> {
+        self.model_buf.clone()
+    }
+
+    pub fn hashmap_to_string(&self) -> String {
+        let json = self.map_data_hash_map.to_json_map().unwrap();
+
+        json
     }
 
     pub fn get_predicted_values_by_hash(&mut self, hash: &str, characteristic: &str, difficulty: &str) -> f64 {
@@ -83,6 +95,12 @@ impl  StarPredictor {
             },
         }
     }
+}
+
+#[wasm_bindgen]
+pub fn restore_star_predictor(model: Vec<u8> ,hashmap_str: &str) -> StarPredictor {
+    let hoge: HashMap<MapKey, MapData> = json_to_map(&hashmap_str).unwrap();
+    StarPredictor { model_buf: model, map_data_hash_map: hoge }
 }
 
 fn make_map_data_hash_map(json_str: String) -> HashMap<MapKey,MapData> {
@@ -197,6 +215,14 @@ mod tests {
         json_file.read_to_end(&mut json_buf).unwrap();
 
         String::from_utf8(json_buf).unwrap()
+    }
+
+    #[test]
+    fn restore(){
+        let hashmap_string = (*PREDICTOR).lock().unwrap().hashmap_to_string();
+        let model = (*PREDICTOR).lock().unwrap().model_getter();
+        let restored_predictor = restore_star_predictor(model, &hashmap_string);
+        assert_eq!(restored_predictor, (*PREDICTOR).lock().unwrap().clone());
     }
 
     #[test]

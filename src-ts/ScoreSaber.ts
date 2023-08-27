@@ -1,5 +1,5 @@
 import { loadModel ,makeHalfBakedData } from "./fetcher";
-import init, { StarPredictor } from "../pkg/predict_star_number_extension";
+import init, { StarPredictor, restore_star_predictor } from "../pkg/predict_star_number_extension";
 
 window.onload = startScoreSaber;
 
@@ -15,11 +15,42 @@ const Characteristic = {
 
 type Characteristic = (typeof Characteristic)[keyof typeof Characteristic];
 
-function startScoreSaber() {
+async function startScoreSaber() {
     let lastUrl = "";
     console.log(lastUrl);
 
     let body = document.querySelector("body");
+
+    let predictor;
+
+    let model = await loadModel();
+    let data = await makeHalfBakedData();
+    console.log("modelとdataのロードが完了しました");
+    let a = chrome.runtime.getURL('a405d3b374e5bb213dfb.wasm');
+    console.log(a);
+    await init(a);
+    console.log("wasmのロードが完了しました");
+    let value = await chrome.storage.local.get(['model', 'hashmap_string']);
+    let cached_model_str = value['model'];
+    let hashmap_string: string = value['hashmap_string'];
+    if (cached_model_str == null || hashmap_string == null) {
+        const startTime = performance.now();
+        predictor = new StarPredictor(model, data);
+        const endTime = performance.now();
+        const executionTime = endTime - startTime;
+        console.log("実行時間（ミリ秒）: ", executionTime);
+        console.log("predictorを作成しました");
+        setStarPredictor(predictor);
+    }
+    else{
+        const cached_model = cached_model_str.split(",") as Uint8Array;
+        const startTime = performance.now();
+        predictor = restore_star_predictor(cached_model, hashmap_string);
+        const endTime = performance.now();
+        const executionTime = endTime - startTime;
+        console.log("実行時間（ミリ秒）: ", executionTime);
+        console.log("predictorを復元しました");
+    }
 
     const mo = new MutationObserver(function () {
         let url = location.href;
@@ -27,7 +58,7 @@ function startScoreSaber() {
         if (url == lastUrl) return;
 
         lastUrl = url;
-        main();
+        main(predictor);
     });
     const config = {
         subtree: true,
@@ -36,7 +67,7 @@ function startScoreSaber() {
     mo.observe(body!, config);
 }
 
-function main() {
+function main(predictor: StarPredictor) {
     console.log("main fired");
     let retryCount = 0;
     const maxRetry = 5;
@@ -52,18 +83,19 @@ function main() {
             console.log("５秒間必要な要素が見つからなかったので終了");
             clearInterval(jsInitCheckTimer);
         }
+
         // マップのリーダーボードorランクリクエストの譜面の固有のページ
         else if (document.querySelector(".media-content.is-clipped") != null) {
-            SwapForLeaderboard(jsInitCheckTimer);
+            SwapForLeaderboard(jsInitCheckTimer, predictor);
         }
         // プレイヤーページのマップ一覧ページorマップ一覧ページ
         else if (document.querySelector(".song-container") != null) {
-            SwapForMapList(jsInitCheckTimer);
+            SwapForMapList(jsInitCheckTimer, predictor);
         }
     }
 }
 
-function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout) {
+function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPredictor) {
     const mapListUrl = "https://scoresaber.com/leaderboards";
     const usersMapListUrl = "https://scoresaber.com/u";
     if (
@@ -86,12 +118,12 @@ function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout) {
             .replace(".png", "");
 
         // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
-        SwapTagName(hash, Characteristic.Standard, beforeTag!);
+        SwapTagName(hash, Characteristic.Standard, beforeTag!, predictor);
     });
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
+function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPredictor) {
     const leaderboardUrl = "https://scoresaber.com/leaderboard";
     const requestUrl = "https://scoresaber.com/ranking/request";
     if (
@@ -128,48 +160,28 @@ function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
         .getAttribute("src")!
         .replace("https://cdn.scoresaber.com/covers/", "")
         .replace(".png", "");
-    SwapTagName(hash, characteristic, beforeTag!);
+    SwapTagName(hash, characteristic, beforeTag!, predictor);
 
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: Element) {
+function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: Element, predictor: StarPredictor) {
     const difficulty = beforeTag.getAttribute("title");
     console.log(hash);
     console.log(characteristic);
     beforeTag.textContent = "...";
-
-    loadModel().then((model) => {
-        makeHalfBakedData().then((data) => {
-            console.log("modelとdataのロードが完了しました");
-            let a = chrome.runtime.getURL('6916493a189316cf15dc.wasm');
-            console.log(a);
-            init(a).then(() => {
-                console.log("wasmのロードが完了しました");
-                chrome.storage.local.get("StarPredictor", function (value) {
-                    let predictor = value["StarPredictor"] as StarPredictor;
-                    console.log(predictor);
-                    if (predictor == null){
-                        let predictor = new StarPredictor(model, data);
-                        console.log("predictorを作成しました");
-                        let value = predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
-                        console.log(value);
-                        beforeTag.textContent = value + "★";
-                        setStarPredictor(predictor);
-                    }
-                    else{
-                        console.log("predictorがnullではありません");
-                        let value = predictor!.get_predicted_values_by_hash(hash, characteristic, difficulty!);
-                        console.log(value);
-                        beforeTag.textContent = value + "★";
-                    }
-                });
-            });
-        }).catch((err) => console.log(err.message));
-    }).catch((err) => console.log(err.message));
+    let value = predictor.get_predicted_values_by_hash(hash, characteristic, difficulty!);
+    console.log(value);
+    beforeTag.textContent = "(" + value.toFixed(2) + "★)";
 }
 
 function setStarPredictor(star_predictor: StarPredictor) {
-    chrome.storage.local.set({'StarPredictor': star_predictor}, function () {
+    console.log("setStarPredictorが呼ばれました");
+    const model_str = star_predictor.model_getter().join(",");
+    console.log("model_str: " + model_str);
+    chrome.storage.local.set({'model': model_str}, function () {
+    });
+    console.log("star_predictor.hashmap_to_string()がはじまります");
+    chrome.storage.local.set({'hashmap_string': star_predictor.hashmap_to_string()}, function () {
     });
 }
