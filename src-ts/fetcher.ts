@@ -31,9 +31,3 @@ export async function loadModel() {
   const buf = await response.arrayBuffer();
   return new Uint8Array(buf);
 }
-
-export async function fetchBeatSaverData(hash: string, difficulty: Difficulty): Promise<any> {
-  const response = await fetch(`https://api.beatsaver.com/maps/hash/${hash}/info?difficulty=${difficulty}}`)
-  const json = await response.json();
-  return json;
-}

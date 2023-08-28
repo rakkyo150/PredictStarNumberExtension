@@ -8,7 +8,7 @@ module.exports = {
     extensions: [".ts", ".tsx", ".js", ".jsx", ".wasm"],
   },
   devtool: 'cheap-module-source-map',
-  entry: {ScoreSaber: './src-ts/ScoreSaber.ts', BeatSaver: './src-ts/BeatSaver.ts'},
+  entry: {ScoreSaber: './src-ts/ScoreSaber.ts', BeatSaver: './src-ts/BeatSaver.ts', background: './src-ts/background.ts'},
   output: {
     publicPath: '',
     path: path.resolve(__dirname, 'dist'),

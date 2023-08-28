@@ -3,6 +3,9 @@
     "version": "1.2.0",
     "manifest_version": 3,
     "description": "Google Chrome Extension version of PredictStarNumber",
+    "background": {
+        "service_worker" : "background.js"
+    },
     "content_scripts": [
         {
             "matches": [
@@ -27,12 +30,15 @@
     ],
     "web_accessible_resources": [
         {
-            "resources": [ "a405d3b374e5bb213dfb.wasm" ],
+            "resources": [ "7c69e2c5eac442b2f4d1.wasm" ],
             "matches": [ "https://scoresaber.com/*" ]
         }
     ],
     "permissions": [
         "storage",
         "unlimitedStorage"
+    ],
+    "host_permission": [
+        "https://api.beatsaver.com/"
     ]
 }

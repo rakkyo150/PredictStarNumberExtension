@@ -1,4 +1,4 @@
-import { loadModel, Difficulty, getDifficultyString, fetchBeatSaverData } from './fetcher';
+import { loadModel, Difficulty, getDifficultyString } from './fetcher';
 import init, { StarPredictor, restore_star_predictor } from "../pkg/predict_star_number_extension";
 
 window.onload = startScoreSaber;
@@ -180,19 +180,20 @@ function SwapTagName(hash: string, characteristic: Characteristic,beforeTag: Ele
         return;
     }
 
-    fetchBeatSaverData(hash, difficulty).then((beatSaverData) => {
-        if (beatSaverData == null) {
+    chrome.runtime.sendMessage(
+        {
+            contentScriptQuery: 'post',
+            endpoint: `https://api.beatsaver.com/maps/hash/${hash}`
+        },
+        (data) => {
+        if (data == null) {
             beforeTag.textContent = "-";
             return;
         }
-        predictor.set_map_data(beatSaverData);
+        predictor.set_map_data(data);
         let value = predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
         console.log(value);
         beforeTag.textContent = "(" + value.toFixed(2) + "★)";
-    })
-    .catch((error) => {
-        console.log(error);
-        beforeTag.textContent = "error";
     });
 }
 
