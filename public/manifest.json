@@ -30,7 +30,7 @@
     ],
     "web_accessible_resources": [
         {
-            "resources": [ "56e1e68ea283e1e243c0.wasm" ],
+            "resources": [ "4ecf99bfe641564fbcb8.wasm" ],
             "matches": [ "https://scoresaber.com/*" ]
         }
     ],

@@ -63,6 +63,12 @@ impl  StarPredictor {
         StarPredictor { model_buf, map_data_hash_map }
     }
 
+    pub fn clone(&self) -> StarPredictor {
+        let model_buf = self.model_buf.clone();
+        let map_data_hash_map = self.map_data_hash_map.clone();
+        StarPredictor { model_buf, map_data_hash_map }
+    }
+
     pub fn model_getter(&self) -> Vec<u8> {
         self.model_buf.clone()
     }

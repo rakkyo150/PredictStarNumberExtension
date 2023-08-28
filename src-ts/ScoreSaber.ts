@@ -3,7 +3,7 @@ import init, { StarPredictor, restore_star_predictor } from "../pkg/predict_star
 
 window.onload = startScoreSaber;
 
-const wasmFilename = "56e1e68ea283e1e243c0.wasm";
+const wasmFilename = "4ecf99bfe641564fbcb8.wasm";
 
 const Characteristic = {
     Standard: "Standard",
@@ -19,7 +19,6 @@ type Characteristic = (typeof Characteristic)[keyof typeof Characteristic];
 
 async function startScoreSaber() {
     let lastUrl = "";
-    console.log(lastUrl);
 
     let body = document.querySelector("body");
 
@@ -109,7 +108,10 @@ function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPredict
             .replace(".png", "");
 
         // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
-        SwapTagName(hash, Characteristic.Standard, beforeTag!, predictor);
+        SwapTagName(hash, Characteristic.Standard, beforeTag!, predictor.clone());
+    });
+    chrome.storage.local.get('hashmap_string').then((value) => {
+        predictor = restore_star_predictor(predictor.model_getter(), value['hashmap_string']);
     });
     clearInterval(jsInitCheckTimer);
 }
@@ -151,7 +153,10 @@ function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPre
         .getAttribute("src")!
         .replace("https://cdn.scoresaber.com/covers/", "")
         .replace(".png", "");
-    SwapTagName(hash, characteristic, beforeTag!, predictor);
+    SwapTagName(hash, characteristic, beforeTag!, predictor.clone());
+    chrome.storage.local.get('hashmap_string').then((value) => {
+        predictor = restore_star_predictor(predictor.model_getter(), value['hashmap_string']);
+    });
 
     clearInterval(jsInitCheckTimer);
 }
@@ -164,6 +169,7 @@ function SwapTagName(hash: string, characteristic: Characteristic,beforeTag: Ele
     beforeTag.textContent = "...";
 
     if(predictor.has_map_data_by_hash(hash, characteristic, getDifficultyString(difficulty))){
+        console.log("No update map data cache");
         let value = predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
         console.log(value);
         beforeTag.textContent = "(" + value.toFixed(2) + "★)";
@@ -180,13 +186,13 @@ function SwapTagName(hash: string, characteristic: Characteristic,beforeTag: Ele
             beforeTag.textContent = "Fetch Error";
             return;
         }
-        predictor = predictor.set_map_data(data);
-        let value = predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
+        let new_predictor = predictor.set_map_data(data);
+        let value = new_predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
         console.log(value);
         if (value == 0) beforeTag.textContent = "No Data";
         else beforeTag.textContent = "(" + value.toFixed(2) + "★)";
         console.log("Update map data cache");
-        chrome.storage.local.set({'hashmap_string': predictor.hashmap_to_string()});
+        chrome.storage.local.set({'hashmap_string': new_predictor.hashmap_to_string()});
     });
 }
 
