@@ -34,8 +34,7 @@ pub struct MapData {
     bpm: f64,
     duration: f64,
     difficulty: String,
-    // sageScoreはempty stringの場合があるので
-    sageScore: String,
+    sageScore: u64,
     njs: f64,
     offset: f64,
     notes: u64,
@@ -43,7 +42,7 @@ pub struct MapData {
     obstacles: u64,
     nps: f64,
     events: f64,
-    chroma: String,
+    chroma: bool,
     errors: u64,
     warns: u64,
     resets: u64,
@@ -52,9 +51,9 @@ pub struct MapData {
 #[wasm_bindgen]
 impl  StarPredictor {
     #[wasm_bindgen(constructor)]
-    pub fn new(model: Vec<u8>, json_str: String) -> StarPredictor {
+    pub fn new(model: Vec<u8>) -> StarPredictor {
         let model_buf: Vec<u8> = model;
-        let map_data_hash_map = make_map_data_hash_map(json_str);
+        let map_data_hash_map: HashMap<MapKey, MapData> = HashMap::new();
         StarPredictor { model_buf, map_data_hash_map }
     }
 
@@ -68,8 +67,55 @@ impl  StarPredictor {
         json
     }
 
+    // ScoreSaberとBeatSaverのjsonを受け取ってHashMapを作る
+    pub fn set_map_data(&mut self, beat_saver: &JsValue) {
+        let beat_saver: serde_json::Value = serde_wasm_bindgen::from_value(beat_saver.clone()).unwrap();
+        self.set_map_data_for_serde_json(&beat_saver);
+    }
+
+    fn set_map_data_for_serde_json(&mut self, beat_saver: &serde_json::Value) {
+        let version = beat_saver["versions"].as_array().unwrap().last().unwrap();
+        let default_sage_score = serde_json::Value::from(0);
+        let default_chroma = serde_json::Value::from(true);
+        for bs_diff_data in version["diffs"].as_array().unwrap(){
+            let map_key: MapKey = MapKey {
+                id: beat_saver["id"].as_str().unwrap().to_owned(),
+                hash: version["hash"].as_str().unwrap().to_owned(),
+                name: beat_saver["name"].as_str().unwrap().to_owned(),
+                characteristic: bs_diff_data["characteristic"].as_str().unwrap().to_owned(),
+                difficulty: bs_diff_data["difficulty"].as_str().unwrap().to_owned()
+            };
+            let map_data: MapData = MapData {
+                bpm: beat_saver["metadata"]["bpm"].as_f64().unwrap(),
+                duration: beat_saver["metadata"]["duration"].as_f64().unwrap(),
+                difficulty: bs_diff_data["difficulty"].as_str().unwrap().to_owned(),
+                sageScore: version.get("sageScore").unwrap_or_else(|| &default_sage_score).as_u64().unwrap(),
+                njs: bs_diff_data["njs"].as_f64().unwrap(),
+                offset: bs_diff_data["offset"].as_f64().unwrap(),
+                notes: bs_diff_data["notes"].as_u64().unwrap(),
+                bombs: bs_diff_data["bombs"].as_u64().unwrap(),
+                obstacles: bs_diff_data["obstacles"].as_u64().unwrap(),
+                nps: bs_diff_data["nps"].as_f64().unwrap(),
+                events: bs_diff_data["events"].as_f64().unwrap(),
+                chroma:  bs_diff_data.get("chroma").unwrap_or_else(|| &default_chroma).as_bool().unwrap(),
+                errors: bs_diff_data["paritySummary"]["errors"].as_u64().unwrap(),
+                warns: bs_diff_data["paritySummary"]["warns"].as_u64().unwrap(),
+                resets: bs_diff_data["paritySummary"]["resets"].as_u64().unwrap()
+            };
+            self.map_data_hash_map.insert(map_key, map_data);
+        }
+    }
+
+    pub fn has_map_data_by_hash(&self, hash: &str, characteristic: &str, difficulty: &str) -> bool {
+        self.map_data_hash_map.keys().any(|key| key.hash.to_lowercase() == hash.to_lowercase() && key.characteristic.to_lowercase() == characteristic.to_lowercase() && key.difficulty.to_lowercase() == difficulty.to_lowercase())
+    }
+
+    pub fn has_map_data_by_id(&self, id: &str, characteristic: &str, difficulty: &str) -> bool {
+        self.map_data_hash_map.keys().any(|key| key.id.to_lowercase() == id.to_lowercase() && key.characteristic.to_lowercase() == characteristic.to_lowercase() && key.difficulty.to_lowercase() == difficulty.to_lowercase())
+    }
+
     pub fn get_predicted_values_by_hash(&mut self, hash: &str, characteristic: &str, difficulty: &str) -> f64 {
-        match self.map_data_hash_map.keys().find(|&key| key.hash == hash && key.characteristic == characteristic && key.difficulty == difficulty)
+        match self.map_data_hash_map.keys().find(|&key| key.hash.to_lowercase() == hash.to_lowercase() && key.characteristic.to_lowercase() == characteristic.to_lowercase() && key.difficulty.to_lowercase() == difficulty.to_lowercase())
         {
             Some(key) => {
                 let record = self.map_data_hash_map.get(key).unwrap();
@@ -83,7 +129,7 @@ impl  StarPredictor {
     }
 
     pub fn get_predicted_values_by_id(&mut self, id: &str, characteristic: &str, difficulty: &str) -> f64 {
-        match self.map_data_hash_map.keys().find(|&key| key.id == id && key.characteristic == characteristic && key.difficulty == difficulty)
+        match self.map_data_hash_map.keys().find(|&key| key.id.to_lowercase() == id.to_lowercase() && key.characteristic.to_lowercase() == characteristic.to_lowercase() && key.difficulty.to_lowercase() == difficulty.to_lowercase())
         {
             Some(key) => {
                 let record = self.map_data_hash_map.get(key).unwrap();
@@ -98,22 +144,9 @@ impl  StarPredictor {
 }
 
 #[wasm_bindgen]
-pub fn restore_star_predictor(model: Vec<u8> ,hashmap_str: &str) -> StarPredictor {
+pub fn restore_star_predictor(model: Vec<u8>, hashmap_str: String) -> StarPredictor {
     let hoge: HashMap<MapKey, MapData> = json_to_map(&hashmap_str).unwrap();
     StarPredictor { model_buf: model, map_data_hash_map: hoge }
-}
-
-fn make_map_data_hash_map(json_str: String) -> HashMap<MapKey,MapData> {
-    let mut map_data_hash_map: HashMap<MapKey,MapData> = HashMap::new();
-    let json: serde_json::Value = serde_json::from_str(&json_str).unwrap();
-    for map_data in json.as_array().unwrap() {
-        for diff in map_data["Diffs"].as_array().unwrap() {
-            let map_key: MapKey = MapKey { id: map_data["Key"].as_str().unwrap().to_owned(), hash: map_data["Hash"].as_str().unwrap().to_owned(), name: map_data["SongName"].as_str().unwrap().to_owned(), characteristic: diff["Char"].as_str().unwrap().to_owned(), difficulty: diff["Diff"].as_str().unwrap().to_owned() };
-            let map_data: MapData = MapData { bpm: map_data["Bpm"].as_f64().unwrap(), duration: map_data["Duration"].as_f64().unwrap(), difficulty: diff["Diff"].as_str().unwrap().to_owned(), sageScore: String::new(), njs: diff["Njs"].as_f64().unwrap(), offset: 0.0, notes: diff["Notes"].as_u64().unwrap(), bombs: diff["Bombs"].as_u64().unwrap(), obstacles: diff["Obstacles"].as_u64().unwrap(), nps: 0.0, events: 0.0, chroma: String::new(), errors: 0, warns: 0, resets: 0 };
-            map_data_hash_map.insert(map_key, map_data);
-        }
-    }
-    map_data_hash_map
 }
 
 fn get_predicted_values(record: &MapData, model_buf: &mut Vec<u8> ) -> f64 {
@@ -139,17 +172,15 @@ fn get_predicted_values(record: &MapData, model_buf: &mut Vec<u8> ) -> f64 {
         "ExpertPlus" => 4.0,
         _ => 0.0
     };
-    let sage_score = record.sageScore.parse().unwrap_or_else(|_err| {
-        0.0
-    });
-    let chroma = if record.chroma == "True" {
+
+    let chroma = if record.chroma {
         1.0
     } else {
         0.0
     };
 
     // Create an input Tensor
-    let data: Vec<f64> = vec![record.bpm, record.duration, difficulties, sage_score ,record.njs , record.offset ,record.notes as f64, record.bombs as f64, record.obstacles as f64, record.nps, record.events, chroma, record.errors as f64, record.warns as f64, record.resets as f64];
+    let data: Vec<f64> = vec![record.bpm, record.duration, difficulties,  record.sageScore as f64 ,record.njs , record.offset ,record.notes as f64, record.bombs as f64, record.obstacles as f64, record.nps, record.events, chroma, record.errors as f64, record.warns as f64, record.resets as f64];
     let shape = [1, 15];
     let input = Tensor::from(Array2::<f64>::from_shape_vec(shape, data).unwrap());
 
@@ -173,10 +204,25 @@ mod tests {
     use super::*;
     use std::io::Read;
     use std::sync::Mutex;
+    use reqwest::blocking::Client;
     use lazy_static::lazy_static;
 
     lazy_static! {
-        static ref PREDICTOR: Mutex<StarPredictor> = Mutex::new(StarPredictor::new(load_model().unwrap(), make_half_baked_data()));
+        static ref HASH: &'static str = "FDA568FC27C20D21F8DC6F3709B49B5CC96723BE";
+        static ref ID: &'static str = "1";
+        static ref CHARACTERISTIC: &'static str = "Standard";
+        static ref DIFFICULTY: &'static str = "Hard";
+        static ref PREDICTOR: Mutex<StarPredictor> = Mutex::new(make_predictor_for_test(*HASH, *ID));
+    }
+
+    pub fn make_predictor_for_test(hash: &str, id: &str) -> StarPredictor {
+        println!("start make_predictor_for_test");
+        let mut predictor = StarPredictor::new(load_model().unwrap());
+        let beat_saver_by_hash = get_data_from_beat_saver_by_hash(hash).unwrap();
+        let beat_saver_by_id = get_data_from_beat_saver_by_id(id).unwrap();
+        predictor.set_map_data_for_serde_json(&beat_saver_by_hash);
+        predictor.set_map_data_for_serde_json(&beat_saver_by_id);
+        predictor
     }
 
     fn load_model() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
@@ -189,39 +235,28 @@ mod tests {
         let mut buf = Vec::new();
         model_asset_response.read_to_end(&mut buf)?;
 
-        /*
-        let model_file_path = Path::new("model.pickle");
-        let mut model_file = File::create(model_file_path)?;
-        model_file.write_all(&buf)?;
-        */
-
         Ok(buf)
     }
 
-    fn make_half_baked_data() ->  String {
-        let endpoint = "https://raw.githubusercontent.com/andruzzzhka/BeatSaberScrappedData/master/combinedScrappedData.zip";
-        let client = reqwest::blocking::Client::new();
-        // endpointからzipを取得して展開して中にあるjsonファイルを読み込む
-        let mut response = match client.get(endpoint).send() {
-            Ok(response) => response,
-            Err(e) => panic!("Error: {}", e),
-        };
-        let mut buf = Vec::new();
-        response.read_to_end(&mut buf).unwrap();
-        println!("buf.len(): {}", buf.len());
-        let mut archive = zip::ZipArchive::new(std::io::Cursor::new(buf)).unwrap();
-        let mut json_file = archive.by_name("combinedScrappedData.json").unwrap();
-        let mut json_buf = Vec::new();
-        json_file.read_to_end(&mut json_buf).unwrap();
+    #[test]
+    fn has_map_data_by_hash(){
+        println!("{}", (*PREDICTOR).lock().unwrap().hashmap_to_string());
+        let has_map_data = (*PREDICTOR).lock().unwrap().has_map_data_by_hash(*HASH, *CHARACTERISTIC, *DIFFICULTY);
+        assert_eq!(has_map_data, true);
+    }
 
-        String::from_utf8(json_buf).unwrap()
+    #[test]
+    fn has_map_data_by_id(){
+        println!("{}", (*PREDICTOR).lock().unwrap().hashmap_to_string());
+        let has_map_data = (*PREDICTOR).lock().unwrap().has_map_data_by_id(*ID, *CHARACTERISTIC, *DIFFICULTY);
+        assert_eq!(has_map_data, true);
     }
 
     #[test]
     fn restore(){
         let hashmap_string = (*PREDICTOR).lock().unwrap().hashmap_to_string();
         let model = (*PREDICTOR).lock().unwrap().model_getter();
-        let restored_predictor = restore_star_predictor(model, &hashmap_string);
+        let restored_predictor = restore_star_predictor(model, hashmap_string);
         assert_eq!(restored_predictor, (*PREDICTOR).lock().unwrap().clone());
     }
 
@@ -236,8 +271,7 @@ mod tests {
 
     #[test]
     fn exisiting_hash() {
-        let hash = "FDA568FC27C20D21F8DC6F3709B49B5CC96723BE";
-        let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_hash(hash, "Standard", "Hard");
+        let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_hash(*HASH, *CHARACTERISTIC, *DIFFICULTY);
         let value = predicted_value;
         println!("predicted_value: {}", value);
         assert_ne!(value, 0.0);
@@ -255,9 +289,30 @@ mod tests {
     #[test]
     fn exisiting_id() {
         let id = "1";
-        let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_id(id, "Standard", "Hard");
+        let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_id(id, *CHARACTERISTIC, *DIFFICULTY);
         let value = predicted_value;
         println!("predicted_value: {}", value);
         assert_ne!(value, 0.0);
     }
+
+    fn get_data_from_beat_saver_by_hash(hash: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let url = format!("https://api.beatsaver.com/maps/hash/{}", hash);
+
+        let client = Client::new();
+        let response = client.get(&url).send()?;
+        let json: serde_json::Value = response.json()?;
+
+        Ok(json)
+    }
+
+    fn get_data_from_beat_saver_by_id(id: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let url = format!("https://api.beatsaver.com/maps/id/{}", id);
+
+        let client = Client::new();
+        let response = client.get(&url).send()?;
+        let json: serde_json::Value = response.json()?;
+
+        Ok(json)
+    }
 }
+

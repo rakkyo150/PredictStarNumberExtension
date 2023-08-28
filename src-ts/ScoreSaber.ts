@@ -1,7 +1,9 @@
-import { loadModel ,makeHalfBakedData } from "./fetcher";
+import { loadModel, Difficulty, getDifficultyString, fetchBeatSaverData } from './fetcher';
 import init, { StarPredictor, restore_star_predictor } from "../pkg/predict_star_number_extension";
 
 window.onload = startScoreSaber;
+
+const wasmFilename = "7c69e2c5eac442b2f4d1.wasm";
 
 const Characteristic = {
     Standard: "Standard",
@@ -24,9 +26,8 @@ async function startScoreSaber() {
     let predictor;
 
     let model = await loadModel();
-    let data = await makeHalfBakedData();
     console.log("modelとdataのロードが完了しました");
-    let a = chrome.runtime.getURL('a405d3b374e5bb213dfb.wasm');
+    let a = chrome.runtime.getURL(wasmFilename);
     console.log(a);
     await init(a);
     console.log("wasmのロードが完了しました");
@@ -35,7 +36,7 @@ async function startScoreSaber() {
     let hashmap_string: string = value['hashmap_string'];
     if (cached_model_str == null || hashmap_string == null) {
         const startTime = performance.now();
-        predictor = new StarPredictor(model, data);
+        predictor = new StarPredictor(model);
         const endTime = performance.now();
         const executionTime = endTime - startTime;
         console.log("実行時間（ミリ秒）: ", executionTime);
@@ -165,14 +166,34 @@ function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPre
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: Element, predictor: StarPredictor) {
-    const difficulty = beforeTag.getAttribute("title");
-    console.log(hash);
-    console.log(characteristic);
+function SwapTagName(hash: string, characteristic: Characteristic,beforeTag: Element, predictor: StarPredictor) {
+    let difficulty: Difficulty;
+    const difficultyStr = beforeTag.getAttribute("title");
+    if (difficultyStr! == "Expert+") difficulty = Difficulty.ExpertPlus;
+    else difficulty = Difficulty[difficultyStr! as keyof typeof Difficulty];
     beforeTag.textContent = "...";
-    let value = predictor.get_predicted_values_by_hash(hash, characteristic, difficulty!);
-    console.log(value);
-    beforeTag.textContent = "(" + value.toFixed(2) + "★)";
+
+    if(predictor.has_map_data_by_hash(hash, characteristic, getDifficultyString(difficulty))){
+        let value = predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
+        console.log(value);
+        beforeTag.textContent = "(" + value.toFixed(2) + "★)";
+        return;
+    }
+
+    fetchBeatSaverData(hash, difficulty).then((beatSaverData) => {
+        if (beatSaverData == null) {
+            beforeTag.textContent = "-";
+            return;
+        }
+        predictor.set_map_data(beatSaverData);
+        let value = predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
+        console.log(value);
+        beforeTag.textContent = "(" + value.toFixed(2) + "★)";
+    })
+    .catch((error) => {
+        console.log(error);
+        beforeTag.textContent = "error";
+    });
 }
 
 function setStarPredictor(star_predictor: StarPredictor) {
