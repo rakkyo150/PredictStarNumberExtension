@@ -3,7 +3,7 @@ import init, { StarPredictor, restore_star_predictor } from "../pkg/predict_star
 
 window.onload = startScoreSaber;
 
-const wasmFilename = "7c69e2c5eac442b2f4d1.wasm";
+const wasmFilename = "56e1e68ea283e1e243c0.wasm";
 
 const Characteristic = {
     Standard: "Standard",
@@ -26,36 +26,26 @@ async function startScoreSaber() {
     let predictor;
 
     let model = await loadModel();
-    console.log("modelとdataのロードが完了しました");
+    console.log("Finish loading model and map data cache");
     let a = chrome.runtime.getURL(wasmFilename);
     console.log(a);
     await init(a);
-    console.log("wasmのロードが完了しました");
+    console.log("Finish loading wasm file");
     let value = await chrome.storage.local.get(['model', 'hashmap_string']);
     let cached_model_str = value['model'];
     let hashmap_string: string = value['hashmap_string'];
     if (cached_model_str == null || hashmap_string == null) {
-        const startTime = performance.now();
         predictor = new StarPredictor(model);
-        const endTime = performance.now();
-        const executionTime = endTime - startTime;
-        console.log("実行時間（ミリ秒）: ", executionTime);
-        console.log("predictorを作成しました");
         setStarPredictor(predictor);
     }
     else{
         const cached_model = cached_model_str.split(",") as Uint8Array;
-        const startTime = performance.now();
         predictor = restore_star_predictor(cached_model, hashmap_string);
-        const endTime = performance.now();
-        const executionTime = endTime - startTime;
-        console.log("実行時間（ミリ秒）: ", executionTime);
-        console.log("predictorを復元しました");
+        console.log("Finish restoring predictor");
     }
 
     const mo = new MutationObserver(function () {
         let url = location.href;
-        console.log(url);
         if (url == lastUrl) return;
 
         lastUrl = url;
@@ -69,7 +59,7 @@ async function startScoreSaber() {
 }
 
 function main(predictor: StarPredictor) {
-    console.log("main fired");
+    console.log("Start main function");
     let retryCount = 0;
     const maxRetry = 5;
     const jsInitCheckTimer = setInterval(jsLoaded, 1000);
@@ -187,23 +177,24 @@ function SwapTagName(hash: string, characteristic: Characteristic,beforeTag: Ele
         },
         (data) => {
         if (data == null) {
-            beforeTag.textContent = "-";
+            beforeTag.textContent = "Fetch Error";
             return;
         }
-        predictor.set_map_data(data);
+        predictor = predictor.set_map_data(data);
         let value = predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
         console.log(value);
-        beforeTag.textContent = "(" + value.toFixed(2) + "★)";
+        if (value == 0) beforeTag.textContent = "No Data";
+        else beforeTag.textContent = "(" + value.toFixed(2) + "★)";
+        console.log("Update map data cache");
+        chrome.storage.local.set({'hashmap_string': predictor.hashmap_to_string()});
     });
 }
 
 function setStarPredictor(star_predictor: StarPredictor) {
-    console.log("setStarPredictorが呼ばれました");
     const model_str = star_predictor.model_getter().join(",");
     console.log("model_str: " + model_str);
     chrome.storage.local.set({'model': model_str}, function () {
     });
-    console.log("star_predictor.hashmap_to_string()がはじまります");
     chrome.storage.local.set({'hashmap_string': star_predictor.hashmap_to_string()}, function () {
     });
 }

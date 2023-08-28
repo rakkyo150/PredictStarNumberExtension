@@ -49,6 +49,12 @@ pub struct MapData {
 }
 
 #[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn js_log(s: &str);
+}
+
+#[wasm_bindgen]
 impl  StarPredictor {
     #[wasm_bindgen(constructor)]
     pub fn new(model: Vec<u8>) -> StarPredictor {
@@ -68,12 +74,13 @@ impl  StarPredictor {
     }
 
     // ScoreSaberとBeatSaverのjsonを受け取ってHashMapを作る
-    pub fn set_map_data(&mut self, beat_saver: &JsValue) {
+    pub fn set_map_data(&self, beat_saver: &JsValue) -> StarPredictor {
         let beat_saver: serde_json::Value = serde_wasm_bindgen::from_value(beat_saver.clone()).unwrap();
-        self.set_map_data_for_serde_json(&beat_saver);
+        self.set_map_data_for_serde_json(&beat_saver)
     }
 
-    fn set_map_data_for_serde_json(&mut self, beat_saver: &serde_json::Value) {
+    fn set_map_data_for_serde_json(&self, beat_saver: &serde_json::Value) -> StarPredictor {
+        let mut new_predictor = self.clone();
         let version = beat_saver["versions"].as_array().unwrap().last().unwrap();
         let default_sage_score = serde_json::Value::from(0);
         let default_chroma = serde_json::Value::from(true);
@@ -102,8 +109,10 @@ impl  StarPredictor {
                 warns: bs_diff_data["paritySummary"]["warns"].as_u64().unwrap(),
                 resets: bs_diff_data["paritySummary"]["resets"].as_u64().unwrap()
             };
-            self.map_data_hash_map.insert(map_key, map_data);
+            new_predictor.map_data_hash_map.insert(map_key, map_data);
         }
+
+        new_predictor
     }
 
     pub fn has_map_data_by_hash(&self, hash: &str, characteristic: &str, difficulty: &str) -> bool {
@@ -114,29 +123,29 @@ impl  StarPredictor {
         self.map_data_hash_map.keys().any(|key| key.id.to_lowercase() == id.to_lowercase() && key.characteristic.to_lowercase() == characteristic.to_lowercase() && key.difficulty.to_lowercase() == difficulty.to_lowercase())
     }
 
-    pub fn get_predicted_values_by_hash(&mut self, hash: &str, characteristic: &str, difficulty: &str) -> f64 {
+    pub fn get_predicted_values_by_hash(&self, hash: &str, characteristic: &str, difficulty: &str) -> f64 {
         match self.map_data_hash_map.keys().find(|&key| key.hash.to_lowercase() == hash.to_lowercase() && key.characteristic.to_lowercase() == characteristic.to_lowercase() && key.difficulty.to_lowercase() == difficulty.to_lowercase())
         {
             Some(key) => {
                 let record = self.map_data_hash_map.get(key).unwrap();
-                get_predicted_values(record, &mut self.model_buf)
+                get_predicted_values(record, &self.model_buf)
             },
             None => {
-                println!("hash not found");
+                // js_log(format!("No Data on hash({}) {}-{}", hash, characteristic,difficulty).as_str());
                 0.0
             },
         }
     }
 
-    pub fn get_predicted_values_by_id(&mut self, id: &str, characteristic: &str, difficulty: &str) -> f64 {
+    pub fn get_predicted_values_by_id(&self, id: &str, characteristic: &str, difficulty: &str) -> f64 {
         match self.map_data_hash_map.keys().find(|&key| key.id.to_lowercase() == id.to_lowercase() && key.characteristic.to_lowercase() == characteristic.to_lowercase() && key.difficulty.to_lowercase() == difficulty.to_lowercase())
         {
             Some(key) => {
                 let record = self.map_data_hash_map.get(key).unwrap();
-                get_predicted_values(record, &mut self.model_buf)
+                get_predicted_values(record, &self.model_buf)
             },
             None => {
-                println!("id not found");
+                // js_log(format!("No Data on id({}) {}-{}", id, characteristic,difficulty).as_str());
                 0.0
             },
         }
@@ -149,7 +158,7 @@ pub fn restore_star_predictor(model: Vec<u8>, hashmap_str: String) -> StarPredic
     StarPredictor { model_buf: model, map_data_hash_map: hoge }
 }
 
-fn get_predicted_values(record: &MapData, model_buf: &mut Vec<u8> ) -> f64 {
+fn get_predicted_values(record: &MapData, model_buf: &Vec<u8> ) -> f64 {
     if model_buf.len() == 0 {
         panic!("no model");
     }
@@ -192,9 +201,7 @@ fn get_predicted_values(record: &MapData, model_buf: &mut Vec<u8> ) -> f64 {
 
     // Extract the result values
     let result = output_tensor.to_array_view::<f64>().unwrap();
-    println!("result: {:?}", result);
     let predicted_value = result[[0, 0]];
-    println!("predicted_value: {}", predicted_value);
 
     predicted_value
 }
@@ -207,6 +214,8 @@ mod tests {
     use reqwest::blocking::Client;
     use lazy_static::lazy_static;
 
+    // テストの際はjs_logをコメントアウトすること
+    
     lazy_static! {
         static ref HASH: &'static str = "FDA568FC27C20D21F8DC6F3709B49B5CC96723BE";
         static ref ID: &'static str = "1";
@@ -216,13 +225,12 @@ mod tests {
     }
 
     pub fn make_predictor_for_test(hash: &str, id: &str) -> StarPredictor {
-        println!("start make_predictor_for_test");
-        let mut predictor = StarPredictor::new(load_model().unwrap());
+        let predictor = StarPredictor::new(load_model().unwrap());
         let beat_saver_by_hash = get_data_from_beat_saver_by_hash(hash).unwrap();
         let beat_saver_by_id = get_data_from_beat_saver_by_id(id).unwrap();
-        predictor.set_map_data_for_serde_json(&beat_saver_by_hash);
-        predictor.set_map_data_for_serde_json(&beat_saver_by_id);
-        predictor
+        let new_predictor = predictor.set_map_data_for_serde_json(&beat_saver_by_hash);
+        let newer_predictor = new_predictor.set_map_data_for_serde_json(&beat_saver_by_id);
+        newer_predictor
     }
 
     fn load_model() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
