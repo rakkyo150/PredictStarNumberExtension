@@ -8,7 +8,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   else if (message.contentScriptQuery === 'post') {
     fetch(message.endpoint)
     .then((response) => {
-      if (response && response.ok) {
+      if (response?.ok) {
         response.json().then((data) => {
           sendResponse(data);
         });

@@ -84,6 +84,7 @@ async function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout) {
     )
         return;
 
+    clearInterval(jsInitCheckTimer);
     const mapCards = document.querySelectorAll(".song-container");
     for (const mapCard of mapCards) {
         console.log("Start swap tag name");
@@ -98,10 +99,10 @@ async function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout) {
             .replace("https://cdn.scoresaber.com/covers/", "")
             .replace(".png", "");
 
+        clearInterval(jsInitCheckTimer);
         // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
         await SwapTagName(hash, Characteristic.Standard, beforeTag!);
     };
-    clearInterval(jsInitCheckTimer);
 }
 
 async function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
@@ -112,6 +113,8 @@ async function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
         !location.href.includes(requestUrl)
     )
         return;
+
+    clearInterval(jsInitCheckTimer);
 
     let characteristic: Characteristic = Characteristic.Standard;
     let cardContent = document.querySelector(".window.card-content");
@@ -142,8 +145,6 @@ async function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
         .replace("https://cdn.scoresaber.com/covers/", "")
         .replace(".png", "");
     await SwapTagName(hash, characteristic, beforeTag!);
-
-    clearInterval(jsInitCheckTimer);
 }
 
 async function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: Element) {
@@ -162,23 +163,19 @@ async function SwapTagName(hash: string, characteristic: Characteristic, beforeT
         return;
     }
 
-    chrome.runtime.sendMessage(
-        {
-            contentScriptQuery: 'post',
-            endpoint: `https://api.beatsaver.com/maps/hash/${hash}`
-        },
-        (data) => {
-        if (data == null) {
-            beforeTag.textContent = "Fetch Error";
-            return;
-        }
-        let new_predictor = predictor.set_map_data(data);
-        let value = new_predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
-        if (value == 0) beforeTag.textContent = "No Data";
-        else beforeTag.textContent = "(" + value.toFixed(2) + "★)";
-        console.log(`Update map data cache: ${hash} ${characteristic} ${getDifficultyString(difficulty)} ${value}`);
-        setStarPredictor(new_predictor);
-    });
+    console.log(`Start fetching map data: ${hash} ${characteristic} ${difficulty}`);
+    let data = await fetch_map_data(hash);
+    console.log(`Finish fetching map data: ${hash} ${characteristic} ${difficulty}`);
+    if (data == null) {
+        beforeTag.textContent = "Fetch Error";
+        return;
+    }
+    let new_predictor = predictor.set_map_data(data);
+    let value = new_predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
+    if (value == 0) beforeTag.textContent = "No Data";
+    else beforeTag.textContent = "(" + value.toFixed(2) + "★)";
+    console.log(`Update map data cache: ${hash} ${characteristic} ${getDifficultyString(difficulty)} ${value}`);
+    setStarPredictor(new_predictor);
 }
 
 function setStarPredictor(star_predictor: StarPredictor) {
@@ -205,4 +202,17 @@ async function generateStarPredictor(): Promise<StarPredictor>{
     }
     console.log("Finish generating model");
     return predictor;
+}
+
+function fetch_map_data(hash: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+    {
+                contentScriptQuery: 'post',
+                endpoint: `https://api.beatsaver.com/maps/hash/${hash}`
+            }, function(response) {
+            resolve(response)
+        });
+    });
+    
 }

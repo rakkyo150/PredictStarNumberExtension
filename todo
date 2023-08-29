@@ -1,3 +1,0 @@
-一度取得した譜面のデータをchrome.storage.localに保存して、それをpredictorにもたせるようにしていたが、predictorには予測に必要なデータだけを逐一渡すようにして、chrome.storage.localだけが全てのデータを保持するようにする
-chrome.storage.localに保存するデータは、keyにMapKeyを、valueにMapDataをそれぞれ文字列化したものを入れる
-オブジェクト生成やそのシリアライズ・デシリアライズはすべてRust側で行う
