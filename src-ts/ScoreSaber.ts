@@ -17,7 +17,11 @@ const Characteristic = {
 
 type Characteristic = (typeof Characteristic)[keyof typeof Characteristic];
 
+let star_already_called = false;
+
 function startScoreSaber() {
+    if (star_already_called) return;
+    star_already_called = true;
     let lastUrl = "";
     console.log("Start startScoreSaber function");
     
