@@ -1,7 +1,12 @@
-import { Difficulty, getDifficultyString } from './Difficulty';
-import init from '../pkg/predict_star_number_extension';
-import { generateStarPredictor, fetch_map_data, setStarPredictor, wasmFilename } from './wrapper';
-import { Characteristic } from './Characteristic';
+import { Difficulty, getDifficultyString } from "./Difficulty";
+import init from "../pkg/predict_star_number_extension";
+import {
+    generateStarPredictor,
+    fetch_map_data_by_hash,
+    setStarPredictor,
+    wasmFilename,
+} from "./wrapper";
+import { Characteristic } from "./Characteristic";
 
 window.onload = startScoreSaber;
 
@@ -12,7 +17,7 @@ function startScoreSaber() {
     star_already_called = true;
     let lastUrl = "";
     console.log("Start startScoreSaber function");
-    
+
     let body = document.querySelector("body");
 
     let a = chrome.runtime.getURL(wasmFilename);
@@ -90,7 +95,7 @@ async function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout) {
         clearInterval(jsInitCheckTimer);
         // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
         await SwapTagName(hash, Characteristic.Standard, beforeTag!);
-    };
+    }
 }
 
 async function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
@@ -108,12 +113,15 @@ async function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
     let cardContent = document.querySelector(".window.card-content");
 
     // ランク譜面でLawlessは今までないので（そういう決まり？）
-    if (location.href.includes(requestUrl)) characteristic = Characteristic.Standard;
+    if (location.href.includes(requestUrl))
+        characteristic = Characteristic.Standard;
     else {
         let content = cardContent!.querySelector(".content");
         let bs = content!.querySelectorAll("b");
         bs.forEach((b) => {
-            characteristic = b.textContent!.replace("Solo", "").replace("HD","") as Characteristic;
+            characteristic = b
+                .textContent!.replace("Solo", "")
+                .replace("HD", "") as Characteristic;
         });
     }
 
@@ -135,7 +143,11 @@ async function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
     await SwapTagName(hash, characteristic, beforeTag!);
 }
 
-async function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: Element) {
+async function SwapTagName(
+    hash: string,
+    characteristic: Characteristic,
+    beforeTag: Element,
+) {
     let difficulty: Difficulty;
     const difficultyStr = beforeTag.getAttribute("title");
     if (difficultyStr! == "Expert+") difficulty = Difficulty.ExpertPlus;
@@ -144,24 +156,40 @@ async function SwapTagName(hash: string, characteristic: Characteristic, beforeT
     beforeTag.textContent = "...";
 
     let predictor = await generateStarPredictor();
-    if(predictor.has_map_data_by_hash(hash, characteristic, getDifficultyString(difficulty))){
-        let value = predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
-        console.log(`No update map data cache: ${hash} ${characteristic} ${difficulty} ${value}`);
+    if (
+        predictor.has_map_data_by_hash(
+            hash,
+            characteristic,
+            getDifficultyString(difficulty),
+        )
+    ) {
+        let value = predictor.get_predicted_values_by_hash(
+            hash,
+            characteristic,
+            getDifficultyString(difficulty),
+        );
+        console.log(
+            `No update map data cache: ${hash} ${characteristic} ${difficulty} ${value}`,
+        );
         beforeTag.textContent = "(" + value.toFixed(2) + "★)";
         return;
     }
 
-    let data = await fetch_map_data(hash);
+    let data = await fetch_map_data_by_hash(hash);
     if (data == null) {
         beforeTag.textContent = "Fetch Error";
         return;
-    }
-    else if (data.status != null && !data.status) {
+    } else if (data.status != null && !data.status) {
+        console.log(data.reason);
         beforeTag.textContent = "No Data";
         return;
     }
     let new_predictor = predictor.set_map_data(data);
-    let value = new_predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
+    let value = new_predictor.get_predicted_values_by_hash(
+        hash,
+        characteristic,
+        getDifficultyString(difficulty),
+    );
     if (value == 0) beforeTag.textContent = "No Data";
     else beforeTag.textContent = "(" + value.toFixed(2) + "★)";
     setStarPredictor(new_predictor);
