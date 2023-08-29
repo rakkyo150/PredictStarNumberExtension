@@ -91,7 +91,7 @@ async function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout) {
         const beforeTag = mapCard.querySelector(".tag");
         const rank = beforeTag!.textContent;
 
-        if (rank!.includes("★") && !rank!.includes(")★")) return;
+        if (rank!.includes("★") && !rank!.includes(")★")) continue;
 
         const songInfo = mapCard.querySelector(".song-image");
         const hash = songInfo!
@@ -163,18 +163,19 @@ async function SwapTagName(hash: string, characteristic: Characteristic, beforeT
         return;
     }
 
-    console.log(`Start fetching map data: ${hash} ${characteristic} ${difficulty}`);
     let data = await fetch_map_data(hash);
-    console.log(`Finish fetching map data: ${hash} ${characteristic} ${difficulty}`);
     if (data == null) {
         beforeTag.textContent = "Fetch Error";
+        return;
+    }
+    else if (data.status != null && !data.status) {
+        beforeTag.textContent = "No Data";
         return;
     }
     let new_predictor = predictor.set_map_data(data);
     let value = new_predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
     if (value == 0) beforeTag.textContent = "No Data";
     else beforeTag.textContent = "(" + value.toFixed(2) + "★)";
-    console.log(`Update map data cache: ${hash} ${characteristic} ${getDifficultyString(difficulty)} ${value}`);
     setStarPredictor(new_predictor);
 }
 
