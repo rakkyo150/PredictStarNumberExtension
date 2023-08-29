@@ -1,21 +1,9 @@
-import { loadModel, Difficulty, getDifficultyString } from './fetcher';
-import init, { StarPredictor, restore_star_predictor } from "../pkg/predict_star_number_extension";
+import { Difficulty, getDifficultyString } from './Difficulty';
+import init from '../pkg/predict_star_number_extension';
+import { generateStarPredictor, fetch_map_data, setStarPredictor, wasmFilename } from './wrapper';
+import { Characteristic } from './Characteristic';
 
 window.onload = startScoreSaber;
-
-const wasmFilename = "56e1e68ea283e1e243c0.wasm";
-
-const Characteristic = {
-    Standard: "Standard",
-    Lawless: "Lawless",
-    Lightshow: "Lightshow",
-    NoArrows: "NoArrows",
-    OneSaber: "OneSaber",
-    "90Degree": "90Degree",
-    "360Degree": "360Degree",
-} as const;
-
-type Characteristic = (typeof Characteristic)[keyof typeof Characteristic];
 
 let star_already_called = false;
 
@@ -177,43 +165,4 @@ async function SwapTagName(hash: string, characteristic: Characteristic, beforeT
     if (value == 0) beforeTag.textContent = "No Data";
     else beforeTag.textContent = "(" + value.toFixed(2) + "★)";
     setStarPredictor(new_predictor);
-}
-
-function setStarPredictor(star_predictor: StarPredictor) {
-    console.log("Set star predictor");
-    const model_str = star_predictor.model_getter().join(",");
-    chrome.storage.local.set({'model': model_str}, function () {
-    });
-    chrome.storage.local.set({'hashmap_string': star_predictor.hashmap_to_string()}, function () {
-    });
-}
-
-async function generateStarPredictor(): Promise<StarPredictor>{
-    let predictor
-    let value = await chrome.storage.local.get(['model', 'hashmap_string'])
-    let cached_model_str = value['model'];
-    let hashmap_string: string = value['hashmap_string'];
-    if (cached_model_str == null || hashmap_string == null) {
-        let model = await loadModel();
-        predictor = new StarPredictor(model);
-    }
-    else{
-        const cached_model = cached_model_str.split(",") as Uint8Array;
-        predictor = restore_star_predictor(cached_model, hashmap_string);
-    }
-    console.log("Finish generating model");
-    return predictor;
-}
-
-function fetch_map_data(hash: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-    {
-                contentScriptQuery: 'post',
-                endpoint: `https://api.beatsaver.com/maps/hash/${hash}`
-            }, function(response) {
-            resolve(response)
-        });
-    });
-    
 }

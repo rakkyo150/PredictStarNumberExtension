@@ -24,10 +24,3 @@ export function getDifficultyString(difficulty: Difficulty): string {
           throw new Error("Invalid difficulty");
   }
 }
-
-export async function loadModel() {
-  const modelAssetEndpoint = "https://raw.githubusercontent.com/rakkyo150/PredictStarNumberHelper/master/model.onnx";
-  const response = await fetch(modelAssetEndpoint);
-  const buf = await response.arrayBuffer();
-  return new Uint8Array(buf);
-}

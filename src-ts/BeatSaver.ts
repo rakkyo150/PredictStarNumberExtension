@@ -1,4 +1,4 @@
-import { loadModel, makeHalfBakedData } from "./fetcher";
+import { getModel, makeHalfBakedData } from "./modelGetter";
 import { StarPredictor } from "../pkg/predict_star_number_extension";
 
 window.onload = startBeatSaver;
@@ -130,7 +130,11 @@ function GetStarNumber(difficultyItem: Element, json: any) {
     return starNumber;
 }
 
-function GetStarNumberHelper(difficultyItem: Element, difficulty: string, json: any) {
+function GetStarNumberHelper(
+    difficultyItem: Element,
+    difficulty: string,
+    json: any,
+) {
     // 変数使うにはCSS.escapeでくくらないと、Uncaught DOMException:
     // Failed to execute 'querySelectorAll' on 'Document'のエラー出てくる
     const characteristicImg = difficultyItem.querySelector(
