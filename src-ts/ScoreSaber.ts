@@ -3,7 +3,7 @@ import init, { StarPredictor, restore_star_predictor } from "../pkg/predict_star
 
 window.onload = startScoreSaber;
 
-const wasmFilename = "4ecf99bfe641564fbcb8.wasm";
+const wasmFilename = "56e1e68ea283e1e243c0.wasm";
 
 const Characteristic = {
     Standard: "Standard",
@@ -17,47 +17,33 @@ const Characteristic = {
 
 type Characteristic = (typeof Characteristic)[keyof typeof Characteristic];
 
-async function startScoreSaber() {
+function startScoreSaber() {
     let lastUrl = "";
-
+    console.log("Start startScoreSaber function");
+    
     let body = document.querySelector("body");
 
-    let predictor;
-
-    let model = await loadModel();
-    console.log("Finish loading model and map data cache");
     let a = chrome.runtime.getURL(wasmFilename);
     console.log(a);
-    await init(a);
-    console.log("Finish loading wasm file");
-    let value = await chrome.storage.local.get(['model', 'hashmap_string']);
-    let cached_model_str = value['model'];
-    let hashmap_string: string = value['hashmap_string'];
-    if (cached_model_str == null || hashmap_string == null) {
-        predictor = new StarPredictor(model);
-        setStarPredictor(predictor);
-    }
-    else{
-        const cached_model = cached_model_str.split(",") as Uint8Array;
-        predictor = restore_star_predictor(cached_model, hashmap_string);
-        console.log("Finish restoring predictor");
-    }
+    init(a).then(() => {
+        console.log("Finish loading wasm file");
 
-    const mo = new MutationObserver(function () {
-        let url = location.href;
-        if (url == lastUrl) return;
+        const mo = new MutationObserver(function () {
+            let url = location.href;
+            if (url == lastUrl) return;
 
-        lastUrl = url;
-        main(predictor);
+            lastUrl = url;
+            main();
+        });
+        const config = {
+            subtree: true,
+            attributes: true,
+        };
+        mo.observe(body!, config);
     });
-    const config = {
-        subtree: true,
-        attributes: true,
-    };
-    mo.observe(body!, config);
 }
 
-function main(predictor: StarPredictor) {
+async function main() {
     console.log("Start main function");
     let retryCount = 0;
     const maxRetry = 5;
@@ -76,16 +62,16 @@ function main(predictor: StarPredictor) {
 
         // マップのリーダーボードorランクリクエストの譜面の固有のページ
         else if (document.querySelector(".media-content.is-clipped") != null) {
-            SwapForLeaderboard(jsInitCheckTimer, predictor);
+            SwapForLeaderboard(jsInitCheckTimer);
         }
         // プレイヤーページのマップ一覧ページorマップ一覧ページ
         else if (document.querySelector(".song-container") != null) {
-            SwapForMapList(jsInitCheckTimer, predictor);
+            SwapForMapList(jsInitCheckTimer);
         }
     }
 }
 
-function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPredictor) {
+async function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout) {
     const mapListUrl = "https://scoresaber.com/leaderboards";
     const usersMapListUrl = "https://scoresaber.com/u";
     if (
@@ -95,7 +81,8 @@ function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPredict
         return;
 
     const mapCards = document.querySelectorAll(".song-container");
-    mapCards.forEach((mapCard) => {
+    for (const mapCard of mapCards) {
+        console.log("Start swap tag name");
         const beforeTag = mapCard.querySelector(".tag");
         const rank = beforeTag!.textContent;
 
@@ -108,15 +95,12 @@ function SwapForMapList(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPredict
             .replace(".png", "");
 
         // ScoreSaberもスタンダードがデフォみたいなのでスタンダードにしておきます
-        SwapTagName(hash, Characteristic.Standard, beforeTag!, predictor.clone());
-    });
-    chrome.storage.local.get('hashmap_string').then((value) => {
-        predictor = restore_star_predictor(predictor.model_getter(), value['hashmap_string']);
-    });
+        await SwapTagName(hash, Characteristic.Standard, beforeTag!);
+    };
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPredictor) {
+async function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout) {
     const leaderboardUrl = "https://scoresaber.com/leaderboard";
     const requestUrl = "https://scoresaber.com/ranking/request";
     if (
@@ -153,25 +137,23 @@ function SwapForLeaderboard(jsInitCheckTimer: NodeJS.Timeout, predictor: StarPre
         .getAttribute("src")!
         .replace("https://cdn.scoresaber.com/covers/", "")
         .replace(".png", "");
-    SwapTagName(hash, characteristic, beforeTag!, predictor.clone());
-    chrome.storage.local.get('hashmap_string').then((value) => {
-        predictor = restore_star_predictor(predictor.model_getter(), value['hashmap_string']);
-    });
+    await SwapTagName(hash, characteristic, beforeTag!);
 
     clearInterval(jsInitCheckTimer);
 }
 
-function SwapTagName(hash: string, characteristic: Characteristic,beforeTag: Element, predictor: StarPredictor) {
+async function SwapTagName(hash: string, characteristic: Characteristic, beforeTag: Element) {
     let difficulty: Difficulty;
     const difficultyStr = beforeTag.getAttribute("title");
     if (difficultyStr! == "Expert+") difficulty = Difficulty.ExpertPlus;
     else difficulty = Difficulty[difficultyStr! as keyof typeof Difficulty];
+    console.log(`Start swap tag name: ${hash} ${characteristic} ${difficulty}`);
     beforeTag.textContent = "...";
 
+    let predictor = await generateStarPredictor();
     if(predictor.has_map_data_by_hash(hash, characteristic, getDifficultyString(difficulty))){
-        console.log("No update map data cache");
         let value = predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
-        console.log(value);
+        console.log(`No update map data cache: ${hash} ${characteristic} ${difficulty} ${value}`);
         beforeTag.textContent = "(" + value.toFixed(2) + "★)";
         return;
     }
@@ -188,19 +170,35 @@ function SwapTagName(hash: string, characteristic: Characteristic,beforeTag: Ele
         }
         let new_predictor = predictor.set_map_data(data);
         let value = new_predictor.get_predicted_values_by_hash(hash, characteristic, getDifficultyString(difficulty));
-        console.log(value);
         if (value == 0) beforeTag.textContent = "No Data";
         else beforeTag.textContent = "(" + value.toFixed(2) + "★)";
-        console.log("Update map data cache");
-        chrome.storage.local.set({'hashmap_string': new_predictor.hashmap_to_string()});
+        console.log(`Update map data cache: ${hash} ${characteristic} ${getDifficultyString(difficulty)} ${value}`);
+        setStarPredictor(new_predictor);
     });
 }
 
 function setStarPredictor(star_predictor: StarPredictor) {
+    console.log("Set star predictor");
     const model_str = star_predictor.model_getter().join(",");
-    console.log("model_str: " + model_str);
     chrome.storage.local.set({'model': model_str}, function () {
     });
     chrome.storage.local.set({'hashmap_string': star_predictor.hashmap_to_string()}, function () {
     });
+}
+
+async function generateStarPredictor(): Promise<StarPredictor>{
+    let predictor
+    let value = await chrome.storage.local.get(['model', 'hashmap_string'])
+    let cached_model_str = value['model'];
+    let hashmap_string: string = value['hashmap_string'];
+    if (cached_model_str == null || hashmap_string == null) {
+        let model = await loadModel();
+        predictor = new StarPredictor(model);
+    }
+    else{
+        const cached_model = cached_model_str.split(",") as Uint8Array;
+        predictor = restore_star_predictor(cached_model, hashmap_string);
+    }
+    console.log("Finish generating model");
+    return predictor;
 }
