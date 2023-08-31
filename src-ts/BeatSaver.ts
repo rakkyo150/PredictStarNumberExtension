@@ -4,8 +4,9 @@ import {
     fetch_map_data_by_id,
     setStarPredictor,
     wasmFilename,
+    test,
 } from "./wrapper";
-import init from "../pkg/predict_star_number_extension";
+import init, { StarPredictor } from "../pkg/predict_star_number_extension";
 import { Characteristic } from './Characteristic';
 
 window.onload = startBeatSaver;
@@ -15,10 +16,9 @@ function startBeatSaver() {
     let lastUrl = "";
     const main = document.querySelector("main");
 
-    let a = chrome.runtime.getURL(wasmFilename);
-    console.log(a);
-    init(a).then(() => {
+    test().then((response) => {
         console.log("Finish loading wasm file");
+        console.log(response.star_predictor);
         const mo = new MutationObserver(function () {
             const url = location.href;
             console.log(url);

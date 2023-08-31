@@ -59,3 +59,16 @@ export function fetch_map_data_by_id(id: string): Promise<any> {
         );
     });
 }
+
+export function test(): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                contentScriptQuery: "test",
+            },
+            function (response) {
+                resolve(response);
+            },
+        );
+    });
+}
