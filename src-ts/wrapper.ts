@@ -6,8 +6,6 @@ import {
 } from "../pkg/predict_star_number_extension";
 import { getModel } from "./modelGetter";
 
-export const wasmFilename = "56e1e68ea283e1e243c0.wasm";
-
 // called by content script for ScoreSaber
 export async function get_predicted_value_by_hash(hash: string, characteristic: Characteristic, difficulty: Difficulty): Promise<string> {
     let predictor = await generateStarPredictor();

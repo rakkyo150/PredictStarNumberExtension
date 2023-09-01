@@ -1,10 +1,12 @@
 import { Difficulty, getDifficultyString } from "./Difficulty";
 import init from "../pkg/predict_star_number_extension";
 import {
-    wasmFilename,
     get_predicted_value_by_hash,
 } from "./wrapper";
 import { Characteristic } from "./Characteristic";
+
+// なぜかwebpackのoutputでwebassemblyModuleFilenameを指定してもファイル名が変わらないので手動で対応してください
+const wasmFilename = "bbec5c49f9a5414bf9b5.wasm";
 
 window.onload = startScoreSaber;
 

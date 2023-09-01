@@ -1,4 +1,4 @@
-import { get_predicted_value_by_id, wasmFilename } from "./wrapper";
+import { get_predicted_value_by_id } from "./wrapper";
 import init from "../pkg/predict_star_number_extension";
 
 let star_predictor_init = false;

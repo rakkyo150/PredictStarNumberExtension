@@ -1,6 +1,5 @@
 const path = require('path');
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   resolve: {
@@ -10,7 +9,6 @@ module.exports = {
   entry: {ScoreSaber: './src-ts/ScoreSaber.ts', BeatSaver: './src-ts/BeatSaver.ts'},
   output: {
     publicPath: '',
-    path: path.resolve(__dirname, 'dist'),
     filename: '[name].js'
   },
   module: {
@@ -30,15 +28,6 @@ module.exports = {
       outDir: path.resolve(__dirname, "pkg"),
       outName: "predict_star_number_extension",
       extraArgs: "--target web",
-    }),
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: ".",
-          context: "public",
-          to: "../dist",
-        },
-      ],
-    }),
+    })
   ]
 };
