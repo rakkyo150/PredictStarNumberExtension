@@ -1,10 +1,8 @@
 import { Difficulty, getDifficultyString } from "./Difficulty";
 import init from "../pkg/predict_star_number_extension";
 import {
-    generateStarPredictor,
-    fetch_map_data_by_hash,
-    setStarPredictor,
     wasmFilename,
+    get_predicted_value_by_hash,
 } from "./wrapper";
 import { Characteristic } from "./Characteristic";
 
@@ -155,42 +153,6 @@ async function SwapTagName(
     console.log(`Start swap tag name: ${hash} ${characteristic} ${difficulty}`);
     beforeTag.textContent = "...";
 
-    let predictor = await generateStarPredictor();
-    if (
-        predictor.has_map_data_by_hash(
-            hash,
-            characteristic,
-            getDifficultyString(difficulty),
-        )
-    ) {
-        let value = predictor.get_predicted_values_by_hash(
-            hash,
-            characteristic,
-            getDifficultyString(difficulty),
-        );
-        console.log(
-            `No update map data cache: ${hash} ${characteristic} ${difficulty} ${value}`,
-        );
-        beforeTag.textContent = "(" + value.toFixed(2) + "★)";
-        return;
-    }
-
-    let data = await fetch_map_data_by_hash(hash);
-    if (data == null) {
-        beforeTag.textContent = "Fetch Error";
-        return;
-    } else if (data.status != null && !data.status) {
-        console.log(data.reason);
-        beforeTag.textContent = "No Data";
-        return;
-    }
-    let new_predictor = predictor.set_map_data(data);
-    let value = new_predictor.get_predicted_values_by_hash(
-        hash,
-        characteristic,
-        getDifficultyString(difficulty),
-    );
-    if (value == 0) beforeTag.textContent = "No Data";
-    else beforeTag.textContent = "(" + value.toFixed(2) + "★)";
-    setStarPredictor(new_predictor);
+    let value = await get_predicted_value_by_hash(hash, characteristic, difficulty);
+    beforeTag.textContent = value;
 }
