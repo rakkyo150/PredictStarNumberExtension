@@ -6,7 +6,7 @@ import {
 import { Characteristic } from "./Characteristic";
 
 // webpackのoutputでwebassemblyModuleFilenameを指定してもファイル名が変わらないので手動で対応してください
-const wasmFilename = "a375b2fb8a5296ab3171.wasm";
+const wasmFilename = "3ed46334d96f8f639b9c.wasm";
 
 window.onload = startScoreSaber;
 
