@@ -111,14 +111,17 @@ function updateMapDataCache(new_predictor: StarPredictor) {
         { hashmap_string: new_predictor.hashmap_to_string() },
         function () {},
     );
+    chrome.storage.local.set({ model_created_day: new Date().getDate() }, function () {});
 }
 
 async function generateStarPredictor(): Promise<StarPredictor> {
     let predictor;
-    let value = await chrome.storage.local.get(["model", "hashmap_string"]);
+    let value = await chrome.storage.local.get(["model", "hashmap_string", "model_created_day"]);
     let cached_model_str = value["model"];
     let hashmap_string: string = value["hashmap_string"];
-    if (cached_model_str == null || hashmap_string == null) {
+    let model_created_day: number = value["model_created_day"];
+    if (cached_model_str == null || hashmap_string == null || model_created_day == null || model_created_day != new Date().getDate()) {
+        console.log("Start getModel");
         let model = await getModel();
         predictor = new StarPredictor(model);
     } else {
