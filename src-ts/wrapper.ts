@@ -8,6 +8,7 @@ import { getModel } from "./modelGetter";
 
 export const wasmFilename = "56e1e68ea283e1e243c0.wasm";
 
+// called by content script
 export async function get_predicted_value_by_hash(hash: string, characteristic: Characteristic, difficulty: Difficulty): Promise<string> {
     let predictor = await generateStarPredictor();
     let value;
@@ -48,6 +49,24 @@ export async function get_predicted_value_by_hash(hash: string, characteristic: 
     return "(" + value.toFixed(2) + "★)";
 }
 
+// called by content script
+export function request_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                contentScriptQuery: "predict_by_id",
+                id: id,
+                characteristic: characteristic,
+                difficulty: difficulty,
+            },
+            function (response) {
+                resolve(response);
+            },
+        );
+    });
+}
+
+// called by background
 export async function get_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<number> {
     let predictor = await generateStarPredictor();
     let value;
@@ -133,20 +152,4 @@ async function fetch_map_data_by_id(id: string): Promise<any> {
     if (response?.ok) {
         return await response.json();
     }
-}
-
-export function request_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<any> {
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-            {
-                contentScriptQuery: "predict_by_id",
-                id: id,
-                characteristic: characteristic,
-                difficulty: difficulty,
-            },
-            function (response) {
-                resolve(response);
-            },
-        );
-    });
 }
