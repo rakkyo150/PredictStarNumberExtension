@@ -1,13 +1,6 @@
 import { Difficulty, getDifficultyString } from "./Difficulty";
-import {
-    generateStarPredictor,
-    fetch_map_data_by_id,
-    setStarPredictor,
-    wasmFilename,
-    test,
-} from "./wrapper";
-import init, { StarPredictor } from "../pkg/predict_star_number_extension";
 import { Characteristic } from './Characteristic';
+import { request_predicted_value_by_id } from './wrapper';
 
 window.onload = startBeatSaver;
 
@@ -15,25 +8,18 @@ function startBeatSaver() {
     console.log("start");
     let lastUrl = "";
     const main = document.querySelector("main");
+    const mo = new MutationObserver(function () {
+        const url = location.href;
+        console.log(url);
+        if (url == lastUrl) return;
 
-    test().then((response) => {
-        console.log("Finish loading wasm file");
-        console.log(response.star_predictor);
-        const mo = new MutationObserver(function () {
-            const url = location.href;
-            console.log(url);
-            if (url == lastUrl) return;
-
-            lastUrl = url;
-            core();
-        });
-        const config = {
-            childList: true,
-        };
-        mo.observe(main!, config);
-    }).catch((error) => {
-        console.log(error);
+        lastUrl = url;
+        core();
     });
+    const config = {
+        childList: true,
+    };
+    mo.observe(main!, config);
 }
 
 async function core() {
@@ -99,41 +85,30 @@ async function swap(id: string) {
             characteristicImg = difficultyItem.querySelector(
                 `img[title~=${CSS.escape("Expert+")}]`,
             );
+            characteristic = characteristicImg!
+            .getAttribute("title")!
+            .replace("Expert+ ", "") as Characteristic;
         }
         else{
             characteristicImg = difficultyItem.querySelector(
                 `img[title~=${CSS.escape(getDifficultyString(difficulty))}]`,
             );
+            characteristic = characteristicImg!
+            .getAttribute("title")!
+            .replace(`${getDifficultyString(difficulty)} `, "") as Characteristic;
         }
 
-        characteristic = characteristicImg!
-        .getAttribute("title")!
-        .replace(`${difficulty} `, "") as Characteristic;
-
-        let predictor = await generateStarPredictor();
-        let value;
-        if (predictor.has_map_data_by_id(id, characteristic, getDifficultyString(difficulty))) {
-            let value = predictor.get_predicted_values_by_id(
-                id,
-                characteristic,
-                getDifficultyString(difficulty),
-            );
-            console.log(
-                `No update map data cache: ${id} ${characteristic} ${difficulty} ${value}`,
-            );
-            setValue(value, difficultyItem);
+        let response = await request_predicted_value_by_id(id, characteristic, difficulty);
+        if (!response.status) {
+            console.log(response.reason);
+            return;
+        }
+        if (response.value == -1) {
+            console.log("Fetch Error");
             return;
         }
 
-        let data = await fetch_map_data_by_id(id);
-        if (data == null) {
-            return;
-        } else if (data.status != null && !data.status) return;
-        let new_predictor = predictor.set_map_data(data);
-        value = new_predictor.get_predicted_values_by_id(id, characteristic, getDifficultyString(difficulty));
-        if (value == 0) return;
-        else setValue(value, difficultyItem);
-        setStarPredictor(new_predictor);
+        setValue(response.value, difficultyItem);
     };
 }
 

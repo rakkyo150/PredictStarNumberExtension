@@ -1,7 +1,7 @@
-import { generateStarPredictor, wasmFilename } from "./wrapper";
-import init, { StarPredictor } from "../pkg/predict_star_number_extension";
+import { get_predicted_value_by_id, wasmFilename } from "./wrapper";
+import init from "../pkg/predict_star_number_extension";
 
-let star_predictor: StarPredictor = null;
+let star_predictor_init = false;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message) {
@@ -13,6 +13,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   else if (message.contentScriptQuery === 'post') {
     fetch(message.endpoint)
     .then((response) => {
+      console.log(message.endpoint);
+      console.log(response);
       if (response?.ok) {
         response.json().then((data) => {
           sendResponse(data);
@@ -27,26 +29,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     });
   }
-  else if (message.contentScriptQuery === 'test') {
-    if (star_predictor == null) {
+  else if (message.contentScriptQuery === 'predict_by_id') {
+    if (!star_predictor_init) {
       init().then(() => {
-        console.log("Finish loading wasm file");
-        generateStarPredictor().then((response: StarPredictor) => {
-          star_predictor = response;
+        star_predictor_init = true;
+        get_predicted_value_by_id(message.id, message.characteristic, message.difficulty).then((value) => {
           sendResponse({
             'status': true,
-            'star_predictor': star_predictor.hashmap_to_string(),
+            'value': value,
           });
+        }).catch((error) => {
+          sendResponse({
+            'status': false,
+            'reason': error,
+          });
+        });
+      }).catch((error) => {
+        sendResponse({
+          'status': false,
+          'reason': error,
         });
       });
     }
     else {
-      console.log(star_predictor.hashmap_to_string());
-      sendResponse({
+      get_predicted_value_by_id(message.id, message.characteristic, message.difficulty).then((value) => {
+        sendResponse({
           'status': true,
-          'star_predictor': star_predictor.hashmap_to_string(),
+          'value': value,
+        });
+      }).catch((error) => {
+        sendResponse({
+          'status': false,
+          'reason': error,
+        });
       });
-    }
+;    }
   }
 
   return true;

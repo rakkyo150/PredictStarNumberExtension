@@ -36,6 +36,7 @@ export async function get_predicted_value_by_hash(hash: string, characteristic: 
         console.log(data.reason);
         return "No Data";
     }
+    console.log(data);
     let new_predictor = predictor.set_map_data(data);
     value = new_predictor.get_predicted_values_by_hash(
         hash,
@@ -45,6 +46,45 @@ export async function get_predicted_value_by_hash(hash: string, characteristic: 
     setStarPredictor(new_predictor)
     if (value == 0) return "No Data";
     return "(" + value.toFixed(2) + "★)";
+}
+
+export async function get_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<number> {
+    let predictor = await generateStarPredictor();
+    let value;
+    if (
+        predictor.has_map_data_by_id(
+            id,
+            characteristic,
+            getDifficultyString(difficulty),
+        )
+    ) {
+        value = predictor.get_predicted_values_by_id(
+            id,
+            characteristic,
+            getDifficultyString(difficulty),
+        );
+        console.log(
+            `No update map data cache: ${id} ${characteristic} ${difficulty} ${value}`,
+        );
+        return value.toFixed(2);
+    }
+    
+    let data = await fetch_map_data_by_id(id);
+    console.log(data);
+    if (data == null) {
+        return -1;
+    } 
+
+    let new_predictor = predictor.set_map_data(data);
+    console.log(`id ${id} ${characteristic} ${getDifficultyString(difficulty)}`)
+    value = new_predictor.get_predicted_values_by_id(
+        id,
+        characteristic,
+        getDifficultyString(difficulty),
+    );
+    setStarPredictor(new_predictor)
+    if (value == 0) return -1;
+    return value.toFixed(2);
 }
 
 function setStarPredictor(star_predictor: StarPredictor) {
@@ -87,25 +127,22 @@ function fetch_map_data_by_hash(hash: string): Promise<any> {
     });
 }
 
-export function fetch_map_data_by_id(id: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-            {
-                contentScriptQuery: "post",
-                endpoint: `https://api.beatsaver.com/maps/id/${id}`,
-            },
-            function (response) {
-                resolve(response);
-            },
-        );
-    });
+async function fetch_map_data_by_id(id: string): Promise<any> {
+    const endpoint = `https://api.beatsaver.com/maps/id/${id}`;
+    let response = await fetch(endpoint)
+    if (response?.ok) {
+        return await response.json();
+    }
 }
 
-export function test(): Promise<any> {
+export function request_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<any> {
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
             {
-                contentScriptQuery: "test",
+                contentScriptQuery: "predict_by_id",
+                id: id,
+                characteristic: characteristic,
+                difficulty: difficulty,
             },
             function (response) {
                 resolve(response);
