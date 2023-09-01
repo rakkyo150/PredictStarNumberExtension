@@ -9,7 +9,7 @@ const background = {
   },
   devtool: 'cheap-module-source-map',
   target: 'webworker',
-  entry: {backgroundDataGetter: './src-ts/backgroundDataGetter.ts'},
+  entry: {background: './src-ts/background.ts'},
   output: {
     publicPath: '',
     path: path.resolve(__dirname, 'dist'),
