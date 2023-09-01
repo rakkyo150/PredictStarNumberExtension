@@ -2,51 +2,7 @@ const path = require('path');
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
-const background = {
-  mode: 'development',
-  resolve: {
-    extensions: [".ts", ".tsx", ".js", ".jsx", ".wasm"],
-  },
-  devtool: 'cheap-module-source-map',
-  target: 'webworker',
-  entry: {background: './src-ts/background.ts'},
-  output: {
-    publicPath: '',
-    path: path.resolve(__dirname, 'dist'),
-    filename: '[name].js'
-  },
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        loader: "ts-loader",
-        options: {
-          transpileOnly: true
-        }
-      }
-    ]
-  },
-  plugins: [
-    new WasmPackPlugin({
-      crateDirectory: path.resolve(__dirname, "pkg"),
-      outDir: path.resolve(__dirname, "pkg"),
-      outName: "predict_star_number_extension",
-      extraArgs: "--target web",
-    }),
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: ".",
-          context: "public",
-          to: "../dist",
-        },
-      ],
-    }),
-  ]
-};
-
-const foreground = {
-  mode: 'development',
+module.exports = {
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx", ".wasm"],
   },
@@ -86,5 +42,3 @@ const foreground = {
     }),
   ]
 };
-
-module.exports = [background, foreground];
