@@ -10,7 +10,7 @@ module.exports = {
   entry: {background: './src-ts/background.ts'},
   output: {
     publicPath: '',
-    filename: '[name].js'
+    filename: '[name].js',
   },
   module: {
     rules: [
@@ -29,6 +29,6 @@ module.exports = {
       outDir: path.resolve(__dirname, "pkg"),
       outName: "predict_star_number_extension",
       extraArgs: "--target web",
-    }),
+    })
   ]
 };

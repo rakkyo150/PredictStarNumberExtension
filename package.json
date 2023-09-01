@@ -10,11 +10,8 @@
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
   },
-  "dependencies": {
-    "jszip": "^3.10.1"
-  },
   "scripts": {
     "dev": "npx webpack --config webpack.dev.js",
-    "prod": "npx webpack --config webpack.prod.js"
+    "prod": "npx webpack --config webpack.prod.foreground.js && npx webpack --config webpack.prod.background.js"
   }
 }
