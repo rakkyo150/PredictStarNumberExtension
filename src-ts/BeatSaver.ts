@@ -100,11 +100,11 @@ async function swap(id: string) {
 
         let response = await request_predicted_value_by_id(id, characteristic, difficulty);
         if (!response.status) {
-            console.log(response.reason);
+            console.error(response.reason);
             return;
         }
         if (response.value == -1) {
-            console.log("Fetch Error");
+            console.warn("Fetch Error");
             return;
         }
 

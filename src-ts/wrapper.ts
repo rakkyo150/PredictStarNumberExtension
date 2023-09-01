@@ -43,7 +43,7 @@ export async function get_predicted_value_by_hash(hash: string, characteristic: 
         characteristic,
         getDifficultyString(difficulty),
     );
-    setStarPredictor(new_predictor)
+    updateMapDataCache(new_predictor)
     if (value == 0) return "No Data";
     return "(" + value.toFixed(2) + "★)";
 }
@@ -81,7 +81,7 @@ export async function get_predicted_value_by_id(id: string, characteristic: Char
             characteristic,
             getDifficultyString(difficulty),
         );
-        console.log(
+    console.log(
             `No update map data cache: ${id} ${characteristic} ${difficulty} ${value}`,
         );
         return value.toFixed(2);
@@ -94,23 +94,23 @@ export async function get_predicted_value_by_id(id: string, characteristic: Char
     } 
 
     let new_predictor = predictor.set_map_data(data);
-    console.log(`id ${id} ${characteristic} ${getDifficultyString(difficulty)}`)
+    console.log(`${id} ${characteristic} ${getDifficultyString(difficulty)}`)
     value = new_predictor.get_predicted_values_by_id(
         id,
         characteristic,
         getDifficultyString(difficulty),
     );
-    setStarPredictor(new_predictor)
+    updateMapDataCache(new_predictor)
     if (value == 0) return -1;
     return value.toFixed(2);
 }
 
-function setStarPredictor(star_predictor: StarPredictor) {
-    console.log("Set star predictor");
-    const model_str = star_predictor.model_getter().join(",");
+function updateMapDataCache(new_predictor: StarPredictor) {
+    console.log("Update map data cache");
+    const model_str = new_predictor.model_getter().join(",");
     chrome.storage.local.set({ model: model_str }, function () {});
     chrome.storage.local.set(
-        { hashmap_string: star_predictor.hashmap_to_string() },
+        { hashmap_string: new_predictor.hashmap_to_string() },
         function () {},
     );
 }
