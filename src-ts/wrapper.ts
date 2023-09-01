@@ -79,7 +79,7 @@ export async function get_predicted_value_by_id(id: string, characteristic: Char
             characteristic,
             getDifficultyString(difficulty),
         );
-    console.log(
+        console.log(
             `No update map data cache: ${id} ${characteristic} ${difficulty} ${value}`,
         );
         return value.toFixed(2);
