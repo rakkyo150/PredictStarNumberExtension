@@ -113,8 +113,11 @@ async function swap(id: string) {
 }
 
 function setValue(value: number, difficultyItem: Element) {
+    // なぜか二回呼ばれることがあるので、ここでもう一度チェックする必要がある
+    if (difficultyItem.querySelector(".diff-stars") != null) {
+        return;
+    }
     const stats = difficultyItem.querySelector(".stats");
-    console.log(stats);
 
     const starSpan = document.createElement("span");
     starSpan.classList.add("diff-stars");

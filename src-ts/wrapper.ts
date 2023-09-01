@@ -8,7 +8,7 @@ import { getModel } from "./modelGetter";
 
 export const wasmFilename = "56e1e68ea283e1e243c0.wasm";
 
-// called by content script
+// called by content script for ScoreSaber
 export async function get_predicted_value_by_hash(hash: string, characteristic: Characteristic, difficulty: Difficulty): Promise<string> {
     let predictor = await generateStarPredictor();
     let value;
@@ -37,7 +37,6 @@ export async function get_predicted_value_by_hash(hash: string, characteristic: 
         console.log(data.reason);
         return "No Data";
     }
-    console.log(data);
     let new_predictor = predictor.set_map_data(data);
     value = new_predictor.get_predicted_values_by_hash(
         hash,
@@ -49,7 +48,7 @@ export async function get_predicted_value_by_hash(hash: string, characteristic: 
     return "(" + value.toFixed(2) + "★)";
 }
 
-// called by content script
+// called by content script for BeatSaver
 export function request_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<any> {
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
@@ -66,7 +65,7 @@ export function request_predicted_value_by_id(id: string, characteristic: Charac
     });
 }
 
-// called by background
+// called by background called by content script for BeatSaver
 export async function get_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<number> {
     let predictor = await generateStarPredictor();
     let value;
