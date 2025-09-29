@@ -1,13 +1,17 @@
 {
+  "name": "predict_star_number_extension",
+  "version": "0.0.0",
+  "scripts": {
+    "wasm-pack": "wasm-pack build --target web --out-dir pkg",
+    "build:prod": "npm run wasm-pack && vite build --mode production --config vite.config.beatsaver.ts && vite build --mode production --config vite.config.scoresaber.ts && vite build --mode production --config vite.config.background.ts",
+    "build:dev": "vite build --mode develop --config vite.config.beatsaver.ts && vite build --mode develop --config vite.config.scoresaber.ts && vite build --mode develop --config vite.config.background.ts",
+    "preview": "vite preview"
+  },
   "devDependencies": {
     "@types/chrome": "^0.1.12",
-    "@wasm-tool/wasm-pack-plugin": "^1.7.0",
-    "copy-webpack-plugin": "^13.0.1",
-    "ts-loader": "^9.4.4",
-    "webpack-cli": "^6.0.1"
-  },
-  "scripts": {
-    "dev": "npx webpack --config webpack.dev.js",
-    "prod": "npx webpack --config webpack.prod.foreground.js && npx webpack --config webpack.prod.background.js"
+    "typescript": "~5.8.3",
+    "vite": "^7.1.7",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0"
   }
 }
