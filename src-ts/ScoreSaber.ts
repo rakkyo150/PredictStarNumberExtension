@@ -5,14 +5,11 @@ import {
 } from "./wrapper";
 import { Characteristic } from "./Characteristic";
 
-// webpackのoutputでwebassemblyModuleFilenameを指定してもファイル名が変わらないので手動で対応してください
-const wasmFilename = "3ed46334d96f8f639b9c.wasm";
-
 window.onload = startScoreSaber;
 
 let start_already_called = false;
 
-function startScoreSaber() {
+async function startScoreSaber() {
     if (start_already_called) return;
     start_already_called = true;
     let lastUrl = "";
@@ -20,24 +17,21 @@ function startScoreSaber() {
 
     let body = document.querySelector("body");
 
-    let a = chrome.runtime.getURL(wasmFilename);
-    console.log(a);
-    init(a).then(() => {
-        console.log("Finish loading wasm file");
+    await init();
+    console.log("Finish loading wasm file");
 
-        const mo = new MutationObserver(function () {
-            let url = location.href;
-            if (url == lastUrl) return;
+    const mo = new MutationObserver(async function () {
+        let url = location.href;
+        if (url == lastUrl) return;
 
-            lastUrl = url;
-            main();
-        });
-        const config = {
-            subtree: true,
-            attributes: true,
-        };
-        mo.observe(body!, config);
+        lastUrl = url;
+        await main();
     });
+    const config = {
+        subtree: true,
+        attributes: true,
+    };
+    mo.observe(body!, config);
 }
 
 async function main() {
@@ -155,6 +149,6 @@ async function SwapTagName(
     console.log(`Start swap tag name: ${hash} ${characteristic} ${difficulty}`);
     beforeTag.textContent = "...";
 
-    let value = await get_predicted_value_by_hash(hash, characteristic, difficulty);
-    beforeTag.textContent = value;
+    let predicted_value = await get_predicted_value_by_hash(hash, characteristic, difficulty);
+    beforeTag.textContent = predicted_value;
 }

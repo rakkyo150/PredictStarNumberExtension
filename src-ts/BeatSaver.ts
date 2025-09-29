@@ -8,13 +8,13 @@ function startBeatSaver() {
     console.log("start");
     let lastUrl = "";
     const main = document.querySelector("main");
-    const mo = new MutationObserver(function () {
+    const mo = new MutationObserver(async function () {
         const url = location.href;
         console.log(url);
         if (url == lastUrl) return;
 
         lastUrl = url;
-        core();
+        await core();
     });
     const config = {
         childList: true,
@@ -26,8 +26,8 @@ async function core() {
     console.log("Start core function");
     let retryCount = 0;
     const maxRetry = 5;
-    const jsInitCheckTimer = setInterval(jsLoaded, 1000);
-    function jsLoaded() {
+    const jsInitCheckTimer = setInterval(async () => await jsLoaded(), 1000);
+    async function jsLoaded() {
         if (document.querySelector(".stats") == null) {
             retryCount++;
             if (retryCount != maxRetry) return;
@@ -47,7 +47,7 @@ async function core() {
             return;
         }
 
-        swap(id);
+        await swap(id);
     }
 }
 
