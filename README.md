@@ -23,3 +23,9 @@ flowchart
 Google Chromeの右上にあるパズルのピースみたいなアイコンから拡張機能を管理ページに移動してください。<br>
 そのあと、右上にあるディベロッパーモードがオンになってない方はオンにして、「パッケージ化されていない拡張機能を読み込む」から、[Releases](https://github.com/rakkyo150/PredictStarNumberExtension/releases)にあるzipファイルを解凍したものを読み込んでください。<br>
 その際、PredictStarNumberExtentionフォルダの直下に.jsファイルとmanifest.jsonファイルがあるというフォルダ構造になっていることを確認してください。
+
+## For Developers
+[cargo-about](https://crates.io/crates/cargo-about/0.8.2/dependencies)と[wasm-pack](https://crates.io/crates/wasm-pack)をインストールしていない方は、`npm run cargo-install`でインストールしてください。  
+wasmのビルドには`npm run wasm-pack`を実行してください。  
+TypeScriptのビルドには`npm run build:dev`を使用してください。  
+リリースの際には`npm run build:prod`を実行してください。  
