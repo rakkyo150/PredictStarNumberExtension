@@ -12,24 +12,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       'reason': 'message is missing'
     });
   }
-  else if (message.contentScriptQuery === 'post') {
-    try{
-      fetch(message.endpoint).then((response)=>{
-        if (response?.ok) {
-          response.json().then((data)=>{
-          sendResponse(data);
-          })
-        }
-      })
-    }
-    catch(error) {
-      sendResponse({
-        'status': false,
-        'url': message.endpoint,
-        'reason': `failed to fetch(${error})`,
-      });
-    };
-  }
   else if (message.contentScriptQuery === 'predict_by_id') {
     if (!star_predictor_init) {
       try{

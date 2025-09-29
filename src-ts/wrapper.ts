@@ -164,18 +164,12 @@ async function generateStarPredictor(): Promise<StarPredictor> {
     return predictor;
 }
 
-function fetch_map_data_by_hash(hash: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-            {
-                contentScriptQuery: "post",
-                endpoint: `https://api.beatsaver.com/maps/hash/${hash}`,
-            },
-            function (response) {
-                resolve(response);
-            },
-        );
-    });
+async function fetch_map_data_by_hash(hash: string): Promise<any> {
+    const endpoint = `https://api.beatsaver.com/maps/hash/${hash}`;
+    let response = await fetch(endpoint)
+    if (response?.ok) {
+        return await response.json();
+    }
 }
 
 async function fetch_map_data_by_id(id: string): Promise<any> {
