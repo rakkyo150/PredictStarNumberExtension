@@ -1,8 +1,8 @@
 {
   "name": "predict_star_number_extension",
-  "version": "0.0.0",
+  "version": "1.4.1",
   "scripts": {
-    "install-about": "cargo install --locked cargo-about",
+    "cargo-install": "cargo install --locked cargo-about wasm-pack",
     "wasm-pack": "wasm-pack build --target web --out-dir pkg",
     "build:prod": "npm run wasm-pack && vite build --mode production --config vite.config.beatsaver.ts && vite build --mode production --config vite.config.scoresaber.ts && vite build --mode production --config vite.config.background.ts && npm run license",
     "build:dev": "vite build --mode develop --config vite.config.beatsaver.ts && vite build --mode develop --config vite.config.scoresaber.ts && vite build --mode develop --config vite.config.background.ts",
