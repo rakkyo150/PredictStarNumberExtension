@@ -1,9 +1,11 @@
 import { get_predicted_value_by_id, get_predicted_value_by_hash } from "./wrapper";
-import init from "../pkg/predict_star_number_extension";
+import initSync from "../pkg/predict_star_number_extension";
 
 let star_predictor_init = false;
 
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+// https://developer.mozilla.org/ja/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#addlistener_%E3%81%AE%E6%A7%8B%E6%96%87
+// asyncを使ったらずれる
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message) {
     sendResponse({
       'status': false,
@@ -12,11 +14,13 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
   else if (message.contentScriptQuery === 'post') {
     try{
-      let response = await fetch(message.endpoint)
-      if (response?.ok) {
-        const data = await response.json()
-        sendResponse(data);
-      }
+      fetch(message.endpoint).then((response)=>{
+        if (response?.ok) {
+          response.json().then((data)=>{
+          sendResponse(data);
+          })
+        }
+      })
     }
     catch(error) {
       sendResponse({
@@ -29,10 +33,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   else if (message.contentScriptQuery === 'predict_by_id') {
     if (!star_predictor_init) {
       try{
-        console.log("test")
-        await init();
+        initSync();
         star_predictor_init = true;
-        console.log("test2")
       }
       catch(error) {
         sendResponse({
@@ -42,10 +44,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       }
     }
     try{
-      const predicted_value = await get_predicted_value_by_id(message.id, message.characteristic, message.difficulty);
-      sendResponse({
-        'status': true,
-        'value': predicted_value,
+      get_predicted_value_by_id(message.id, message.characteristic, message.difficulty).then((predicted_value)=>{
+        console.log(predicted_value);
+        sendResponse({
+          'status': true,
+          'value': predicted_value,
+        });
       });
     }
     catch(error) {
@@ -55,10 +59,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       });
     }
   }
-  else if (message.contentScriptQuery == 'predict_by_hash'){
+  else if (message.contentScriptQuery === 'predict_by_hash'){
     if (!star_predictor_init) {
       try{
-        await init();
+        initSync();
         star_predictor_init = true;
       }
       catch(error) {
@@ -69,10 +73,13 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       }
     }
     try{
-      const predicted_value = await get_predicted_value_by_hash(message.hash, message.characteristic, message.difficulty);
-      sendResponse({
-        'status': true,
-        'value': predicted_value,
+      console.log(message);
+      get_predicted_value_by_hash(message.hash, message.characteristic, message.difficulty).then((predicted_value)=>{
+        console.log(predicted_value);
+        sendResponse({
+          'status': true,
+          'value': predicted_value,
+        });
       });
     }
     catch(error) {
@@ -81,6 +88,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         'reason': error,
       });
     }
+  }
+  else{
+    sendResponse({
+      'status': false,
+      'reason': "no match contentScriptQuery",
+    });
   }
 
   return true;

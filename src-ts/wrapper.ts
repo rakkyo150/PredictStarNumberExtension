@@ -6,6 +6,8 @@ import {
 } from "../pkg/predict_star_number_extension";
 import { getModel } from "./modelGetter";
 
+let predictor;
+
 // called by content script for ScoreSaber
 export async function request_predicted_value_by_hash(hash: string, characteristic: Characteristic, difficulty: Difficulty): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -17,7 +19,6 @@ export async function request_predicted_value_by_hash(hash: string, characterist
                 difficulty: difficulty,
             },
             function (response) {
-                let predicted_string = "";
                 resolve(response);
             },
         );
@@ -25,7 +26,10 @@ export async function request_predicted_value_by_hash(hash: string, characterist
 }
 
 export async function get_predicted_value_by_hash(hash: string, characteristic: Characteristic, difficulty: Difficulty): Promise<number> {
-    let predictor = await generateStarPredictor();
+    if(predictor===undefined){
+        predictor = await generateStarPredictor();
+    }
+    console.log("finish create StarPredictor")
     let value;
     if (
         predictor.has_map_data_by_hash(
@@ -47,11 +51,13 @@ export async function get_predicted_value_by_hash(hash: string, characteristic: 
     
     let data = await fetch_map_data_by_hash(hash);
     if (data == null) {
+        console.warn("data is null")
         return -1;
     } else if (data.status != null && !data.status) {
-        console.log(data.reason);
+        console.warn(data.reason);
         return -1;
     }
+    console.log(data);
     let new_predictor = predictor.set_map_data(data);
     value = new_predictor.get_predicted_values_by_hash(
         hash,
@@ -82,7 +88,9 @@ export async function request_predicted_value_by_id(id: string, characteristic: 
 
 // called by background called by content script for BeatSaver
 export async function get_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<number> {    
-    let predictor = await generateStarPredictor();
+    if(predictor===undefined){
+        predictor = await generateStarPredictor();
+    }
     let value;
     if (
         predictor.has_map_data_by_id(
@@ -143,7 +151,14 @@ async function generateStarPredictor(): Promise<StarPredictor> {
         predictor = new StarPredictor(model);
     } else {
         const cached_model = cached_model_str.split(",") as Uint8Array;
-        predictor = restore_star_predictor(cached_model, hashmap_string);
+        try{
+            predictor = restore_star_predictor(cached_model, hashmap_string);
+        }
+        catch(error){
+            console.warn(error);
+            let model = await getModel();
+            predictor = new StarPredictor(model);
+        }
     }
     console.log("Finish generating model");
     return predictor;
