@@ -1,4 +1,4 @@
-import { Characteristic } from "./Characteristic";
+import { Characteristic } from './Characteristic';
 import { Difficulty, getDifficultyString } from "./Difficulty";
 import {
     StarPredictor,
@@ -7,7 +7,24 @@ import {
 import { getModel } from "./modelGetter";
 
 // called by content script for ScoreSaber
-export async function get_predicted_value_by_hash(hash: string, characteristic: Characteristic, difficulty: Difficulty): Promise<string> {
+export async function request_predicted_value_by_hash(hash: string, characteristic: Characteristic, difficulty: Difficulty): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                contentScriptQuery: "predict_by_hash",
+                hash: hash,
+                characteristic: characteristic,
+                difficulty: difficulty,
+            },
+            function (response) {
+                let predicted_string = "";
+                resolve(response);
+            },
+        );
+    });
+}
+
+export async function get_predicted_value_by_hash(hash: string, characteristic: Characteristic, difficulty: Difficulty): Promise<number> {
     let predictor = await generateStarPredictor();
     let value;
     if (
@@ -25,15 +42,15 @@ export async function get_predicted_value_by_hash(hash: string, characteristic: 
         console.log(
             `No update map data cache: ${hash} ${characteristic} ${difficulty} ${value}`,
         );
-        return "(" + value.toFixed(2).toString() + "★)";
+        return value.toFixed(2);
     }
     
     let data = await fetch_map_data_by_hash(hash);
     if (data == null) {
-        return "Fetch Error";
+        return -1;
     } else if (data.status != null && !data.status) {
         console.log(data.reason);
-        return "No Data";
+        return -1;
     }
     let new_predictor = predictor.set_map_data(data);
     value = new_predictor.get_predicted_values_by_hash(
@@ -42,12 +59,12 @@ export async function get_predicted_value_by_hash(hash: string, characteristic: 
         getDifficultyString(difficulty),
     );
     updateMapDataCache(new_predictor)
-    if (value == 0) return "No Data";
-    return "(" + value.toFixed(2) + "★)";
+    if (value == 0) return -1;
+    return value.toFixed(2);
 }
 
 // called by content script for BeatSaver
-export function request_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<any> {
+export async function request_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<any> {
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
             {
@@ -64,7 +81,7 @@ export function request_predicted_value_by_id(id: string, characteristic: Charac
 }
 
 // called by background called by content script for BeatSaver
-export async function get_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<number> {
+export async function get_predicted_value_by_id(id: string, characteristic: Characteristic, difficulty: Difficulty): Promise<number> {    
     let predictor = await generateStarPredictor();
     let value;
     if (

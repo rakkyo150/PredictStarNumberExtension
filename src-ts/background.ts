@@ -1,4 +1,4 @@
-import { get_predicted_value_by_id } from "./wrapper";
+import { get_predicted_value_by_id, get_predicted_value_by_hash } from "./wrapper";
 import init from "../pkg/predict_star_number_extension";
 
 let star_predictor_init = false;
@@ -29,13 +29,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   else if (message.contentScriptQuery === 'predict_by_id') {
     if (!star_predictor_init) {
       try{
+        console.log("test")
         await init();
         star_predictor_init = true;
-        const predicted_value = await get_predicted_value_by_id(message.id, message.characteristic, message.difficulty);
-        sendResponse({
-          'status': true,
-          'value': predicted_value,
-        });
+        console.log("test2")
       }
       catch(error) {
         sendResponse({
@@ -44,13 +41,25 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         });
       }
     }
-    else {
+    try{
+      const predicted_value = await get_predicted_value_by_id(message.id, message.characteristic, message.difficulty);
+      sendResponse({
+        'status': true,
+        'value': predicted_value,
+      });
+    }
+    catch(error) {
+      sendResponse({
+        'status': false,
+        'reason': error,
+      });
+    }
+  }
+  else if (message.contentScriptQuery == 'predict_by_hash'){
+    if (!star_predictor_init) {
       try{
-        const predicted_value = await get_predicted_value_by_id(message.id, message.characteristic, message.difficulty);
-        sendResponse({
-          'status': true,
-          'value': predicted_value,
-        });
+        await init();
+        star_predictor_init = true;
       }
       catch(error) {
         sendResponse({
@@ -58,6 +67,19 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           'reason': error,
         });
       }
+    }
+    try{
+      const predicted_value = await get_predicted_value_by_hash(message.hash, message.characteristic, message.difficulty);
+      sendResponse({
+        'status': true,
+        'value': predicted_value,
+      });
+    }
+    catch(error) {
+      sendResponse({
+        'status': false,
+        'reason': error,
+      });
     }
   }
 

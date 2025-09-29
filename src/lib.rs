@@ -269,7 +269,7 @@ mod tests {
     }
 
     #[test]
-    fn non_exisiting_hash() {
+    fn non_existing_hash() {
         let hash = "-1";
         let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_hash(hash, "Standard", "Hard");
         let value = predicted_value;
@@ -278,7 +278,7 @@ mod tests {
     }
 
     #[test]
-    fn exisiting_hash() {
+    fn existing_hash() {
         let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_hash(*HASH, *CHARACTERISTIC, *DIFFICULTY);
         let value = predicted_value;
         println!("predicted_value: {}", value);
@@ -286,7 +286,7 @@ mod tests {
     }
 
     #[test]
-    fn non_exisiting_id() {
+    fn non_existing_id() {
         let id = "-1";
         let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_id(id, "Standard", "Hard");
         let value = predicted_value;
@@ -295,7 +295,7 @@ mod tests {
     }
 
     #[test]
-    fn exisiting_id() {
+    fn existing_id() {
         let id = "1";
         let predicted_value = (*PREDICTOR).lock().unwrap().get_predicted_values_by_id(id, *CHARACTERISTIC, *DIFFICULTY);
         let value = predicted_value;

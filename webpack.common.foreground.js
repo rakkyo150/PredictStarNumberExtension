@@ -22,12 +22,4 @@ module.exports = {
       }
     ]
   },
-  plugins: [
-    new WasmPackPlugin({
-      crateDirectory: path.resolve(__dirname, "pkg"),
-      outDir: path.resolve(__dirname, "pkg"),
-      outName: "predict_star_number_extension",
-      extraArgs: "--target web",
-    })
-  ]
 };

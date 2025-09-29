@@ -1,7 +1,6 @@
 import { Difficulty, getDifficultyString } from "./Difficulty";
-import init from "../pkg/predict_star_number_extension";
 import {
-    get_predicted_value_by_hash,
+    request_predicted_value_by_hash,
 } from "./wrapper";
 import { Characteristic } from "./Characteristic";
 
@@ -14,12 +13,7 @@ async function startScoreSaber() {
     start_already_called = true;
     let lastUrl = "";
     console.log("Start startScoreSaber function");
-
     let body = document.querySelector("body");
-
-    await init();
-    console.log("Finish loading wasm file");
-
     const mo = new MutationObserver(async function () {
         let url = location.href;
         if (url == lastUrl) return;
@@ -146,9 +140,21 @@ async function SwapTagName(
     const difficultyStr = beforeTag.getAttribute("title");
     if (difficultyStr! == "Expert+") difficulty = Difficulty.ExpertPlus;
     else difficulty = Difficulty[difficultyStr! as keyof typeof Difficulty];
-    console.log(`Start swap tag name: ${hash} ${characteristic} ${difficulty}`);
+    console.log(`SwapTagName: ${hash} ${characteristic} ${difficulty}`);
     beforeTag.textContent = "...";
 
-    let predicted_value = await get_predicted_value_by_hash(hash, characteristic, difficulty);
-    beforeTag.textContent = predicted_value;
+    const response = await request_predicted_value_by_hash(hash, characteristic, difficulty);
+    console.log(response);
+    if (!response.status) {
+        console.error(response.reason);
+        beforeTag.textContent = "No Data";
+        return;
+    }
+
+    if (response.value == -1) {
+        beforeTag.textContent = "No Data";
+        return;
+    }
+
+    beforeTag.textContent = "(" + response.value + "★)";
 }

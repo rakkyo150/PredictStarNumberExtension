@@ -98,7 +98,8 @@ async function swap(id: string) {
             .replace(`${getDifficultyString(difficulty)} `, "") as Characteristic;
         }
 
-        let response = await request_predicted_value_by_id(id, characteristic, difficulty);
+        const response = await request_predicted_value_by_id(id, characteristic, difficulty);
+        console.log(response);
         if (!response.status) {
             console.error(response.reason);
             return;
