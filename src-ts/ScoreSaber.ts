@@ -58,7 +58,7 @@ async function main() {
 
 async function SwapForMapList(jsInitCheckTimer: number) {
     const mapListUrl = "https://scoresaber.com/leaderboards";
-    const usersMapListUrl = "https://scoresaber.com/u";
+    const usersMapListUrl = "https://scoresaber.com/u/";
     if (
         !location.href.includes(mapListUrl) &&
         !location.href.includes(usersMapListUrl)
@@ -87,8 +87,8 @@ async function SwapForMapList(jsInitCheckTimer: number) {
 }
 
 async function SwapForLeaderboard(jsInitCheckTimer: number) {
-    const leaderboardUrl = "https://scoresaber.com/leaderboard";
-    const requestUrl = "https://scoresaber.com/ranking/request";
+    const leaderboardUrl = "https://scoresaber.com/leaderboard/";
+    const requestUrl = "https://scoresaber.com/ranking/request/";
     if (
         !location.href.includes(leaderboardUrl) &&
         !location.href.includes(requestUrl)
