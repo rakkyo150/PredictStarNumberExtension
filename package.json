@@ -12,7 +12,7 @@
   "devDependencies": {
     "@types/chrome": "^0.1.12",
     "typescript": "~5.8.3",
-    "vite": "^7.1.7",
+    "vite": "^7.1.11",
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.5.0"
   }
