@@ -7,6 +7,10 @@
         "type": "module",
         "service_worker" : "background.js"
     },
+    "host_permissions": [
+        "https://github.com/",
+        "https://release-assets.githubusercontent.com/"
+    ],
     "content_scripts": [
         {
             "matches": [
