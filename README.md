@@ -1,7 +1,14 @@
 # PredictStarNumberExtension
 
 ## これはなに？
-[PredictStarNumber](https://github.com/rakkyo150/PredictStarNumber)(BeatSaverで公開されている譜面のScoreSaberのランク基準の星の数を予測するアプリ)のChrome拡張機能版です。<br>
+[PredictStarNumber](https://github.com/rakkyo150/PredictStarNumber)(BeatSaverで公開されている譜面のScoreSaberのランク基準の星の数を予測するアプリ)のChrome拡張機能版です。
+
+BeatSaverでの例
+![beatsaver](beatsaver.png)
+
+ScoreSaberでの例
+![scoresaber](scoresaber.png)
+
 現在対応しているのは、BeatSaverに関しては譜面の個別ページで、ScoreSaberに関してはプレイ履歴、譜面検索ページと譜面の個別ページです。<br>
 
 ## 関連リンク
